@@ -1,15 +1,51 @@
+import type { Page } from "patchright";
 import type { AppContext } from "../context.js";
 import { LinkedInMcpError } from "../errors.js";
 import { urls } from "../linkedin/urls.js";
-import { hasSessionCookie, launchContext } from "./session.js";
+import { isLinkedInUrl, isRestrictionUrl } from "../safety/guard.js";
+import { hasSessionCookie, launchBrowser } from "./session.js";
 
-const SIGNED_IN_PATH = /linkedin\.com\/(feed|in\/|mynetwork|notifications|messaging|jobs)/;
+const SIGNED_IN_PATH = /^\/(feed|in\/|mynetwork|notifications|messaging|jobs)/;
 const NOT_DONE_PATH = /\/(login|checkpoint|authwall|uas\/|signup)/;
 
 export interface LoginResult {
   name: string | null;
   profile_url: string | null;
   already_signed_in: boolean;
+}
+
+export type LoginProgress = { state: "waiting" } | { state: "signed_in"; url: string } | { state: "restricted"; url: string };
+
+function linkedInPath(url: string): string | null {
+  return isLinkedInUrl(url) ? new URL(url).pathname : null;
+}
+
+/**
+ * Pure: where sign-in stands, from the URL of every open tab and whether the
+ * session cookie is set. Any tab counts, because people often finish signing
+ * in (or get sent on) in a tab other than the first. A restricted account can
+ * never finish, so that wins over waiting.
+ */
+export function loginProgress(pageUrls: readonly string[], hasCookie: boolean): LoginProgress {
+  const restricted = pageUrls.find((u) => isLinkedInUrl(u) && isRestrictionUrl(u));
+  if (restricted) return { state: "restricted", url: restricted };
+  if (hasCookie) {
+    const done = pageUrls.find((u) => {
+      const path = linkedInPath(u);
+      return path !== null && SIGNED_IN_PATH.test(path) && !NOT_DONE_PATH.test(path);
+    });
+    if (done) return { state: "signed_in", url: done };
+  }
+  return { state: "waiting" };
+}
+
+function restrictedError(url: string): LinkedInMcpError {
+  return new LinkedInMcpError(
+    "CHECKPOINT",
+    "LinkedIn shows this account as restricted, so sign-in can't finish here.",
+    "Open linkedin.com in your normal browser and follow LinkedIn's steps to restore the account. Once LinkedIn lifts the restriction, run the login command again.",
+    { url },
+  );
 }
 
 /**
@@ -20,32 +56,42 @@ export interface LoginResult {
 export async function interactiveLogin(ctx: AppContext, opts: { timeoutMs?: number; keepOpen?: boolean; log?: (msg: string) => void } = {}): Promise<LoginResult> {
   const log = opts.log ?? ((m: string) => console.error(m));
   const timeoutMs = opts.timeoutMs ?? 10 * 60_000;
-  const context = await launchContext(ctx.config, { headless: false });
+  const { context } = await launchBrowser(ctx.config, { headless: false });
   let closed = false;
   context.on("close", () => {
     closed = true;
   });
 
   try {
-    const page = context.pages()[0] ?? (await context.newPage());
+    const first = context.pages()[0] ?? (await context.newPage());
     const alreadySignedIn = await hasSessionCookie(context);
-    await page.goto(alreadySignedIn ? urls.feed() : urls.login(), { waitUntil: "domcontentloaded" });
+    await first.goto(alreadySignedIn ? urls.feed() : urls.login(), { waitUntil: "domcontentloaded" });
     log(alreadySignedIn ? "A browser window is open on LinkedIn. Resolve anything LinkedIn asks for there." : "Sign in to LinkedIn in the browser window that just opened. Complete any 2FA or verification there.");
 
     const deadline = Date.now() + timeoutMs;
+    let page: Page;
     for (;;) {
-      if (closed || page.isClosed()) {
+      const open = closed ? [] : context.pages().filter((p) => !p.isClosed());
+      if (!open.length) {
         throw new LinkedInMcpError("NOT_LOGGED_IN", "The browser window was closed before sign-in finished.", "Run the login command again and finish signing in before closing the window.");
       }
-      const url = page.url();
-      if ((await hasSessionCookie(context).catch(() => false)) && SIGNED_IN_PATH.test(url) && !NOT_DONE_PATH.test(url)) break;
+      const progress = loginProgress(
+        open.map((p) => p.url()),
+        await hasSessionCookie(context).catch(() => false),
+      );
+      if (progress.state === "restricted") throw restrictedError(progress.url);
+      if (progress.state === "signed_in") {
+        page = open.find((p) => p.url() === progress.url) ?? open[0]!;
+        break;
+      }
       if (Date.now() > deadline) {
-        throw new LinkedInMcpError("TIMEOUT", "Sign-in did not finish within 10 minutes.", "Run the login command again.");
+        throw new LinkedInMcpError("TIMEOUT", `Sign-in did not finish within ${Math.round(timeoutMs / 60_000)} minutes.`, "Run the login command again.");
       }
       await new Promise((r) => setTimeout(r, 1500));
     }
 
     await page.goto(urls.me(), { waitUntil: "domcontentloaded" });
+    if (isRestrictionUrl(page.url())) throw restrictedError(page.url());
     await page.waitForSelector("main h1", { timeout: 20_000 }).catch(() => undefined);
     const id = /\/in\/([^/?#]+)/.exec(page.url())?.[1] ?? null;
     const name = (await page.locator("main h1").first().innerText().catch(() => "")).trim() || null;
