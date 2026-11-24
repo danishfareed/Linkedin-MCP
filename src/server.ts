@@ -11,12 +11,15 @@ export const INSTRUCTIONS = `This server runs the user's own LinkedIn account th
 
 Rules:
 - Every tool that sends or changes something (posts, schedules, comments, replies, reactions, connection requests, invitation responses, messages, deletions) first returns a preview and a confirmation_token. Show the preview to the user exactly as written. Call confirm_action only after the user explicitly says yes. Never confirm on your own initiative, and never batch-confirm several actions from one approval.
+- confirm_action returns status sent, unconfirmed or not_sent. Never retry an unconfirmed action: the send button was clicked, so retrying may send it twice. Tell the user to check LinkedIn. A not_sent action is safe to retry once its reason is dealt with.
+- Some clients show the user an approval dialog during confirm_action. If it returns USER_DECLINED, nothing was sent; don't ask again unless the user wants a changed version.
 - Daily and weekly caps protect the account. When a tool returns LIMIT_REACHED, tell the user when it resets; do not retry or work around it.
-- If a tool returns CHECKPOINT or CIRCUIT_OPEN, stop. Relay the next_step to the user. Do not retry and do not call resume unless the user says they resolved it.
+- If a tool returns CHECKPOINT, CIRCUIT_OPEN or RATE_LIMITED, stop. Relay the next_step to the user. Do not retry and do not call resume unless the user says they resolved it.
 - Searches and profile views are capped and return small result sets. Do not loop over them to build lists of people.
 - get_person_posts and get_company_posts read someone's recent posts and count as profile views.
 - search_jobs, get_job_details and get_saved_jobs are read-only. This server never applies to jobs.
 - List results include complete. When it is false, tell the user the list may be partial and pass on the note.
+- UNSUPPORTED_LANGUAGE means LinkedIn isn't set to English; sending stops before typing anything. Reads still work.
 - Errors include a next_step field; relay it to the user.`;
 
 export const ALL_TOOLS: ToolDef[] = [

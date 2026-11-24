@@ -2,7 +2,8 @@ import { z } from "zod";
 import { withBrowser } from "../context.js";
 import { invalidInput } from "../errors.js";
 import { readFeedPosts, searchPosts } from "../linkedin/pages/feed.js";
-import { readNotifications } from "../linkedin/pages/lists.js";
+import { readNotificationsResult } from "../linkedin/pages/lists.js";
+import { listPayload } from "../linkedin/parse/list.js";
 import { REACTIONS, comment, react, readComments, reply } from "../linkedin/pages/post.js";
 import { DATE_POSTED, POST_CONTENT_TYPES, POST_SORTS, postUrl } from "../linkedin/urls.js";
 import { PREVIEW_NOTE, READ, WRITE_PREVIEW, defineTool } from "./registry.js";
@@ -140,6 +141,6 @@ export const engagementTools = [
     description: "Recent LinkedIn notifications: comments, reactions, mentions, profile views and more, with links.",
     input: { limit: z.number().int().min(1).max(30).default(15) },
     annotations: READ,
-    handler: async (args, ctx) => ({ notifications: await withBrowser(ctx, (nav) => readNotifications(nav, args.limit)) }),
+    handler: async (args, ctx) => listPayload("notifications", await withBrowser(ctx, (nav) => readNotificationsResult(nav, args.limit))),
   }),
 ];

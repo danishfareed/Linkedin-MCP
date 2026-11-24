@@ -2,7 +2,8 @@ import { z } from "zod";
 import { withBrowser } from "../context.js";
 import { invalidInput } from "../errors.js";
 import { readCompanyPosts, readPersonPosts } from "../linkedin/pages/activity.js";
-import { listInvitations, readConversation, readInbox, respondToInvitation, searchCompanies, searchPeople, sendMessage } from "../linkedin/pages/lists.js";
+import { listInvitationsResult, readConversationResult, readInboxResult, respondToInvitation, searchCompaniesResult, searchPeopleResult, sendMessage } from "../linkedin/pages/lists.js";
+import { listPayload } from "../linkedin/parse/list.js";
 import { readCompany, readMyProfile, readPersonProfile, sendConnectionRequest } from "../linkedin/pages/profile.js";
 import { PROFILE_SECTIONS } from "../linkedin/parse/profile.js";
 import { companySlug, profileId, profileUrl, threadUrl } from "../linkedin/urls.js";
@@ -162,7 +163,7 @@ export const researchTools = [
       await ctx.limits.assertAvailable("search");
       return withBrowser(ctx, async (nav) => {
         await ctx.limits.consume("search");
-        return { people: await searchPeople(nav, args.keywords, args.filters, args.limit) };
+        return listPayload("people", await searchPeopleResult(nav, args.keywords, args.filters, args.limit));
       });
     },
   }),
@@ -178,7 +179,7 @@ export const researchTools = [
       await ctx.limits.assertAvailable("search");
       return withBrowser(ctx, async (nav) => {
         await ctx.limits.consume("search");
-        return { companies: await searchCompanies(nav, args.keywords, args.limit) };
+        return listPayload("companies", await searchCompaniesResult(nav, args.keywords, args.limit));
       });
     },
   }),
@@ -212,7 +213,7 @@ export const networkTools = [
     description: "Pending connection invitations you've received or sent. Each received invitation has an id for respond_to_invitation.",
     input: { direction: z.enum(["received", "sent"]).default("received"), limit: z.number().int().min(1).max(50).default(20) },
     annotations: READ,
-    handler: async (args, ctx) => ({ invitations: await withBrowser(ctx, (nav) => listInvitations(nav, args.direction, args.limit)) }),
+    handler: async (args, ctx) => listPayload("invitations", await withBrowser(ctx, (nav) => listInvitationsResult(nav, args.direction, args.limit))),
   }),
 
   defineTool({
@@ -235,7 +236,7 @@ export const messagingTools = [
     description: "Recent conversations: who, the last message, when, whether unread, and the thread URL.",
     input: { limit: z.number().int().min(1).max(20).default(10) },
     annotations: READ,
-    handler: async (args, ctx) => ({ conversations: await withBrowser(ctx, (nav) => readInbox(nav, args.limit)) }),
+    handler: async (args, ctx) => listPayload("conversations", await withBrowser(ctx, (nav) => readInboxResult(nav, args.limit))),
   }),
 
   defineTool({
@@ -248,7 +249,7 @@ export const messagingTools = [
     annotations: READ,
     handler: async (args, ctx) => {
       const target = conversationTarget(args.thread_or_profile);
-      return { messages: await withBrowser(ctx, (nav) => readConversation(nav, target, args.limit)) };
+      return listPayload("messages", await withBrowser(ctx, (nav) => readConversationResult(nav, target, args.limit)));
     },
   }),
 
