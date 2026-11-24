@@ -9,6 +9,11 @@ export const ERROR_CODES = [
   "TIMEOUT",
   "INVALID_INPUT",
   "BROWSER_UNAVAILABLE",
+  "RATE_LIMITED",
+  "NETWORK",
+  "NOT_FOUND",
+  "USER_DECLINED",
+  "UNSUPPORTED_LANGUAGE",
   "INTERNAL",
 ] as const;
 
@@ -76,10 +81,49 @@ export function notLoggedIn(): LinkedInMcpError {
   );
 }
 
+/**
+ * LinkedIn is throttling this session (HTTP 429/999 or a redirect loop).
+ * Callers trip the circuit breaker for a cooldown before throwing this.
+ */
+export function rateLimited(retryAfterSeconds: number, details?: Record<string, unknown>): LinkedInMcpError {
+  const minutes = Math.max(1, Math.round(retryAfterSeconds / 60));
+  return new LinkedInMcpError(
+    "RATE_LIMITED",
+    "LinkedIn is limiting requests from this session.",
+    `Stop for now. linkedin-mcp has paused itself for about ${minutes} minutes. Don't retry before then, and lower your caps with set_limits if this happens again.`,
+    { retry_after_seconds: retryAfterSeconds, ...details },
+  );
+}
+
+export function networkError(cause: string, details?: Record<string, unknown>): LinkedInMcpError {
+  return new LinkedInMcpError(
+    "NETWORK",
+    "Couldn't reach LinkedIn. The connection failed or a different site answered (for example a Wi-Fi sign-in page).",
+    "Check your internet connection, open linkedin.com in your normal browser, then try again.",
+    { cause, ...details },
+  );
+}
+
+export function notFound(what: string, details?: Record<string, unknown>): LinkedInMcpError {
+  return new LinkedInMcpError("NOT_FOUND", `${what} wasn't found on LinkedIn.`, "Check the URL or name and try again.", details);
+}
+
+export function userDeclined(): LinkedInMcpError {
+  return new LinkedInMcpError("USER_DECLINED", "You declined this action, so nothing was sent.", "No further action is needed. Ask for a new preview if you want to change it.");
+}
+
+const RATE_LIMIT_NET_ERRORS = /net::ERR_TOO_MANY_REDIRECTS/;
+const NETWORK_NET_ERRORS =
+  /net::ERR_(INTERNET_DISCONNECTED|NAME_NOT_RESOLVED|CONNECTION_(REFUSED|RESET|CLOSED|TIMED_OUT|FAILED)|NETWORK_CHANGED|ADDRESS_UNREACHABLE|PROXY_CONNECTION_FAILED|TIMED_OUT|SSL_PROTOCOL_ERROR|CERT_[A-Z_]+)/;
+
 /** Normalise anything thrown into a LinkedInMcpError. */
 export function toMcpError(err: unknown): LinkedInMcpError {
   if (err instanceof LinkedInMcpError) return err;
   const message = err instanceof Error ? err.message : String(err);
+  const firstLine = message.split("\n")[0] ?? message;
+  if (RATE_LIMIT_NET_ERRORS.test(message)) return rateLimited(4 * 3600, { cause: firstLine });
+  const net = NETWORK_NET_ERRORS.exec(message);
+  if (net) return networkError(net[0]);
   if (err instanceof Error && (err.name === "TimeoutError" || /Timeout \d+ms exceeded/i.test(message))) {
     return new LinkedInMcpError(
       "TIMEOUT",
