@@ -27,6 +27,7 @@ import {
   type SlotStatus,
   type StrategyDraft,
   type TimeWindow,
+  fieldPath,
   ideaInputSchema,
   ideaPatchSchema,
   isoDate,
@@ -228,9 +229,9 @@ export function makeGrowthTools(reader: LinkedInReader = browserReader) {
         NEVER_SENDS,
       input: {
         action: z.enum(["get", "update"]).default("get"),
-        patch: profileSchema.optional().describe("Fields to set. Objects merge; lists replace."),
+        patch: profileSchema.optional().describe("Fields to set. Objects merge; lists replace. Unknown fields are rejected."),
         append: profileSchema.optional().describe("List items to add, e.g. { proof_bank: [...] } or { voice: { banned_words: ['synergy'] } }."),
-        unset: z.array(z.string().min(1).max(100)).max(50).optional().describe("Dotted paths to remove, e.g. ['offer.price_point']."),
+        unset: z.array(fieldPath).max(50).optional().describe("Dotted paths of profile fields to remove, e.g. ['offer.price_point']."),
       },
       annotations: LOCAL,
       handler: async (args, ctx) => {

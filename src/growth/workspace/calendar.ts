@@ -63,6 +63,9 @@ export async function addSlots(file: string, planned: NewSlot[], origin: Slot["o
 
 export type SlotPatch = Partial<Omit<Slot, "id" | "created_at" | "updated_at" | "origin">>;
 
+/** The only fields a patch may set. Anything else in a patch is ignored. */
+const PATCHABLE = new Set<string>(["date", "time", "status", "idea_id", "pillar", "funnel_stage", "method", "format", "draft_text", "media_paths", "document_title", "review", "scheduled_for", "post_url", "published_at", "notes"]);
+
 /** Fields `clear` may remove. */
 export const CLEARABLE = ["idea_id", "pillar", "funnel_stage", "method", "format", "draft_text", "media_paths", "document_title", "scheduled_for", "post_url", "published_at", "notes", "review"] as const;
 export type ClearableField = (typeof CLEARABLE)[number];
@@ -80,7 +83,7 @@ export async function updateSlot(file: string, id: string, patch: SlotPatch, cle
     const previous = slots[index]!;
     let slot: Slot = { ...previous };
     for (const field of clear) delete slot[field];
-    slot = { ...slot, ...Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined)), updated_at: now.toISOString() };
+    slot = { ...slot, ...Object.fromEntries(Object.entries(patch).filter(([k, v]) => PATCHABLE.has(k) && v !== undefined)), updated_at: now.toISOString() };
     if (slot.media_paths) classifyMedia(slot.media_paths);
     if (derive) slot = derive(slot, previous);
     slots[index] = slot;

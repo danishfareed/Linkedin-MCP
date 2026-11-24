@@ -5,6 +5,7 @@ import type { Post } from "../../linkedin/parse/feed.js";
 import type { Metric } from "../../linkedin/parse/analytics.js";
 import { withFileLock } from "../../state/store.js";
 import { localDayKey } from "../../util/time.js";
+import { isSafeKey } from "../workspace/files.js";
 import { estimatePostedAt, postedAtFromUrn } from "./math.js";
 
 /**
@@ -133,13 +134,17 @@ export function profileSnapshot(metrics: Record<string, Metric>, now: Date): Pro
   };
 }
 
-/** Same-day merge: newer non-null values win, older values fill gaps. */
+/**
+ * Same-day merge: newer non-null values win, older values fill gaps. Records
+ * can come from a hand-edited file, so prototype keys are dropped.
+ */
 export function mergeRecord<T extends HistoryRecord>(older: T, newer: T): T {
-  const out: Record<string, unknown> = { ...older };
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(older)) if (isSafeKey(k)) out[k] = v;
   for (const [k, v] of Object.entries(newer)) {
-    if (v === null || v === undefined) continue;
+    if (!isSafeKey(k) || v === null || v === undefined) continue;
     if (k === "sources" && Array.isArray(v)) out[k] = [...new Set([...((older as PostSnapshot).sources ?? []), ...v])];
-    else if (k === "changes" && typeof v === "object") out[k] = { ...(older as ProfileSnapshot).changes, ...v };
+    else if (k === "changes" && typeof v === "object") out[k] = Object.fromEntries(Object.entries({ ...(older as ProfileSnapshot).changes, ...v }).filter(([key]) => isSafeKey(key)));
     else out[k] = v;
   }
   return out as T;

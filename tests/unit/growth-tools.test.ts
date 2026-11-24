@@ -269,6 +269,31 @@ describe("growth tools over MCP", () => {
     expect(up.body.slots[0].schedule_post_input).toEqual({ text: "Short draft.\n\nWhat would you add?", document: { path: deck, title: "5 onboarding fixes" }, publish_at: "2026-12-01T12:30" });
   });
 
+  it("rejects prototype-polluting profile changes over MCP", async () => {
+    const { call, files } = await setup();
+    const attempts: Record<string, unknown>[] = [
+      { action: "update", unset: ["__proto__.polluted"] },
+      { action: "update", unset: ["constructor.prototype.polluted"] },
+      { action: "update", unset: ["voice.prototype"] },
+      // JSON.parse makes "__proto__" an own key, as it arrives from a client.
+      { action: "update", patch: JSON.parse('{"__proto__":{"x":1,"polluted":true}}') },
+      { action: "update", patch: JSON.parse('{"identity":{"__proto__":{"polluted":true}}}') },
+      { action: "update", append: JSON.parse('{"voice":{"constructor":{"prototype":{"polluted":true}}}}') },
+      { action: "update", patch: { identity: { role: "COO" }, unknown_field: 1 } },
+    ];
+    for (const args of attempts) {
+      const r = await call("growth_profile", args);
+      expect(r.isError, JSON.stringify(args)).toBe(true);
+    }
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    expect(({} as Record<string, unknown>).x).toBeUndefined();
+    expect(existsSync(files.profile)).toBe(false);
+    // A normal unset still works.
+    await call("growth_profile", { action: "update", patch: { offer: { price_point: "£5k", description: "Sprint" } } });
+    const ok = await call("growth_profile", { action: "update", unset: ["offer.price_point"] });
+    expect(ok.body.profile.offer).toEqual({ description: "Sprint" });
+  });
+
   it("rejects bad input with clear errors", async () => {
     const { call } = await setup();
     expect((await call("growth_profile", { action: "update" })).body.error.message).toMatch(/patch, append or unset/);

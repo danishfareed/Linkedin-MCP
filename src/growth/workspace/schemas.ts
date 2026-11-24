@@ -1,5 +1,6 @@
 import { isAbsolute } from "node:path";
 import { z } from "zod";
+import { isFieldPath } from "./files.js";
 
 /**
  * Schemas for the growth workspace: the brand book (profile), the strategy,
@@ -48,11 +49,18 @@ const list = (max = 50, itemMax = 300) => z.array(text(itemMax)).max(max);
 const absolutePath = z.string().refine((p) => isAbsolute(p), { message: "Use an absolute path" });
 const hexColor = z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Use a hex colour like #0A66C2");
 
+/** A dotted field path like voice.banned_words: lower-case field names only, never a prototype key. */
+export const fieldPath = z
+  .string()
+  .max(100)
+  .regex(/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/, "Use lower-case field names separated by dots, e.g. voice.banned_words")
+  .refine(isFieldPath, { message: "prototype, constructor and __proto__ aren't field names" });
+
 // --- Profile (brand book) ----------------------------------------------------
 
 export const GOAL_TYPES = ["followers", "leads", "hiring", "job_search", "authority", "community", "other"] as const;
 
-export const goalSchema = z.object({
+export const goalSchema = z.strictObject({
   id: z.string().max(20).optional().describe("Assigned automatically (g1, g2, …)."),
   type: z.enum(GOAL_TYPES),
   description: text(500).describe("What success looks like, in the user's words."),
@@ -65,7 +73,7 @@ export type Goal = z.infer<typeof goalSchema>;
 
 export const PROOF_KINDS = ["story", "win", "number", "case_study", "testimonial", "credential", "failure"] as const;
 
-export const proofSchema = z.object({
+export const proofSchema = z.strictObject({
   id: z.string().max(20).optional().describe("Assigned automatically (p1, p2, …). Strategy pillars and ideas refer to proof by this id."),
   kind: z.enum(PROOF_KINDS),
   title: text(200),
@@ -77,9 +85,9 @@ export const proofSchema = z.object({
 export type Proof = z.infer<typeof proofSchema>;
 
 export const profileSchema = z
-  .object({
+  .strictObject({
     identity: z
-      .object({
+      .strictObject({
         name: text(120),
         headline: text(250),
         role: text(200),
@@ -91,7 +99,7 @@ export const profileSchema = z
       })
       .partial(),
     offer: z
-      .object({
+      .strictObject({
         description: text(1000).describe("What the user sells or wants (product, service, role, job)."),
         outcome: text(500).describe("The result buyers or employers get."),
         price_point: text(100),
@@ -100,7 +108,7 @@ export const profileSchema = z
       })
       .partial(),
     audience: z
-      .object({
+      .strictObject({
         who: text(500).describe("The ideal customer profile in one or two sentences."),
         roles: list(20),
         industries: list(20),
@@ -114,7 +122,7 @@ export const profileSchema = z
     goals: z.array(goalSchema).max(10),
     proof_bank: z.array(proofSchema).max(100),
     voice: z
-      .object({
+      .strictObject({
         samples: z.array(text(3000)).max(10).describe("Posts or paragraphs the user actually wrote."),
         tone_words: list(15, 40),
         phrases_used: list(30, 120).describe("Phrases the user really says."),
@@ -125,7 +133,7 @@ export const profileSchema = z
       .partial(),
     topics_to_avoid: list(30, 200),
     posting_constraints: z
-      .object({
+      .strictObject({
         hours_per_week: z.number().min(0).max(40).describe("Time the user can spend on LinkedIn per week, writing and engaging."),
         days: z.array(weekday).max(7).describe("Days the user is willing to post."),
         time_windows: z.array(timeWindow).max(4),
@@ -134,9 +142,9 @@ export const profileSchema = z
       })
       .partial(),
     visuals: z
-      .object({
-        colors: z.object({ primary: hexColor, secondary: hexColor, accent: hexColor, background: hexColor, text: hexColor }).partial(),
-        fonts: z.object({ heading: text(100), body: text(100) }).partial(),
+      .strictObject({
+        colors: z.strictObject({ primary: hexColor, secondary: hexColor, accent: hexColor, background: hexColor, text: hexColor }).partial(),
+        fonts: z.strictObject({ heading: text(100), body: text(100) }).partial(),
         logo_path: absolutePath,
         headshot_path: absolutePath,
         style_notes: text(500),
@@ -185,7 +193,7 @@ export const kpiSchema = z.object({
 export type Kpi = z.infer<typeof kpiSchema>;
 
 export const strategyDraftSchema = z
-  .object({
+  .strictObject({
     positioning: text(1000).describe("For [audience] who [pain], [user] is the [category] who [unique proof/benefit]."),
     pillars: z.array(pillarSchema).max(5),
     funnel_mix: z
@@ -266,10 +274,10 @@ export const ideaFields = {
   notes: text(1000).optional(),
 };
 
-export const ideaInputSchema = z.object(ideaFields);
+export const ideaInputSchema = z.strictObject(ideaFields);
 export type IdeaInput = z.infer<typeof ideaInputSchema>;
 
-export const ideaPatchSchema = z.object({ ...ideaFields, hooks: ideaFields.hooks.optional(), thesis: ideaFields.thesis.optional(), status: z.enum(IDEA_STATUSES).optional() });
+export const ideaPatchSchema = z.strictObject({ ...ideaFields, hooks: ideaFields.hooks.optional(), thesis: ideaFields.thesis.optional(), status: z.enum(IDEA_STATUSES).optional() });
 export type IdeaPatch = z.infer<typeof ideaPatchSchema>;
 
 export interface Idea extends IdeaInput {

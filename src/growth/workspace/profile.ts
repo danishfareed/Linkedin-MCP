@@ -1,6 +1,6 @@
 import { invalidInput } from "../../errors.js";
 import { readJson, updateJson } from "../../state/store.js";
-import { deepMerge, isPlainObject, nextId, pruneEmpty, unsetPath } from "./files.js";
+import { assertSafeKeys, deepMerge, isPlainObject, isSafeKey, nextId, parseFieldPath, pruneEmpty, unsetPath } from "./files.js";
 import { type GrowthProfile, profileSchema } from "./schemas.js";
 
 export interface ProfileFile {
@@ -14,8 +14,8 @@ const EMPTY: ProfileFile = { schema: 1, updated_at: null, profile: {} };
 export async function readProfile(file: string): Promise<ProfileFile> {
   const raw = await readJson<ProfileFile>(file, EMPTY);
   const parsed = profileSchema.safeParse(raw.profile ?? {});
-  // A hand-edited file that no longer validates is still returned, so nothing is lost; updates re-validate.
-  return { schema: 1, updated_at: raw.updated_at ?? null, profile: parsed.success ? parsed.data : ((raw.profile ?? {}) as GrowthProfile) };
+  // A hand-edited file that no longer validates is still returned (without prototype keys), so nothing is lost; updates re-validate.
+  return { schema: 1, updated_at: raw.updated_at ?? null, profile: parsed.success ? parsed.data : pruneEmpty((raw.profile ?? {}) as GrowthProfile) };
 }
 
 function sameItem(a: unknown, b: unknown): boolean {
@@ -29,16 +29,20 @@ function sameItem(a: unknown, b: unknown): boolean {
  */
 export function appendLists(base: unknown, append: unknown, path = ""): unknown {
   if (!isPlainObject(append)) throw invalidInput(`append only adds to lists; ${path || "the value"} isn't a list. Use patch to set it.`);
-  const out: Record<string, unknown> = isPlainObject(base) ? { ...base } : {};
+  const out: Record<string, unknown> = {};
+  if (isPlainObject(base)) for (const [k, v] of Object.entries(base)) if (isSafeKey(k)) out[k] = v;
   for (const [key, value] of Object.entries(append)) {
+    if (!isSafeKey(key)) throw invalidInput(`"${key}" isn't allowed as a field name${path ? ` (in ${path})` : ""}.`);
     if (value === undefined) continue;
     const here = path ? `${path}.${key}` : key;
+    const existing = Object.hasOwn(out, key) ? out[key] : undefined;
     if (Array.isArray(value)) {
-      const current = Array.isArray(out[key]) ? [...(out[key] as unknown[])] : [];
+      assertSafeKeys(value, here);
+      const current = Array.isArray(existing) ? [...(existing as unknown[])] : [];
       for (const item of value) if (!current.some((c) => sameItem(c, item))) current.push(item);
       out[key] = current;
     } else if (isPlainObject(value)) {
-      out[key] = appendLists(out[key], value, here);
+      out[key] = appendLists(existing, value, here);
     } else {
       throw invalidInput(`append only adds to lists; ${here} isn't a list. Use patch to set it.`);
     }
@@ -75,13 +79,19 @@ export interface ProfileChange {
   unset?: string[];
 }
 
-/** Applies patch (deep merge, lists replace), then append, then unset; validates; saves. */
+/**
+ * Applies patch (deep merge, lists replace), then append, then unset;
+ * validates; saves. Only what the profile schema parses is written, so
+ * unknown and prototype keys never reach the file.
+ */
 export async function updateProfile(file: string, change: ProfileChange, now: Date): Promise<ProfileFile> {
+  // Check every path before touching anything.
+  for (const p of change.unset ?? []) parseFieldPath(p, profileSchema);
   return updateJson<ProfileFile>(file, EMPTY, (current) => {
     let next = deepMerge<GrowthProfile>(current.profile ?? {}, change.patch ?? {});
     if (change.append) next = appendLists(next, change.append) as GrowthProfile;
     next = structuredClone(next);
-    const missing = (change.unset ?? []).filter((p) => !unsetPath(next as Record<string, unknown>, p));
+    const missing = (change.unset ?? []).filter((p) => !unsetPath(next as Record<string, unknown>, p, profileSchema));
     if (missing.length) throw invalidInput(`Nothing to remove at ${missing.join(", ")}.`);
     next = withIds(pruneEmpty(next));
     const parsed = profileSchema.safeParse(next);

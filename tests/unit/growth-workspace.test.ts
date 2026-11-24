@@ -1,12 +1,13 @@
-import { readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { addSlots, classifyMedia, formatFromMedia, readCalendar, scheduleInput, slotNextStep, slotView, updateSlot } from "../../src/growth/workspace/calendar.js";
-import { deepMerge, growthFiles, nextId, writeTextAtomic } from "../../src/growth/workspace/files.js";
+import { mergeRecord, parseHistory } from "../../src/growth/analytics/history.js";
+import { type SlotPatch, addSlots, classifyMedia, formatFromMedia, readCalendar, scheduleInput, slotNextStep, slotView, updateSlot } from "../../src/growth/workspace/calendar.js";
+import { deepMerge, growthFiles, nextId, pruneEmpty, schemaHasPath, unsetPath, writeTextAtomic } from "../../src/growth/workspace/files.js";
 import { addIdeas, advanceIdea, advanceStatus, archiveIdeas, filterIdeas, ideaScore, readIdeas, updateIdea } from "../../src/growth/workspace/ideas.js";
 import { renderStrategyMarkdown } from "../../src/growth/workspace/markdown.js";
 import { appendLists, profileCompleteness, readProfile, updateProfile } from "../../src/growth/workspace/profile.js";
-import type { GrowthProfile, IdeaInput, StrategyDraft } from "../../src/growth/workspace/schemas.js";
+import { type GrowthProfile, type IdeaInput, type StrategyDraft, profileSchema } from "../../src/growth/workspace/schemas.js";
 import { approveStrategy, approvedVersion, archiveStrategy, checkForApproval, latestDraft, readStrategy, saveDraft } from "../../src/growth/workspace/strategy.js";
 import { tempDir } from "./helpers.js";
 
@@ -78,7 +79,8 @@ describe("growth profile", () => {
 
     await updateProfile(f.profile, { unset: ["voice.tone_words"] }, NOW);
     expect((await readProfile(f.profile)).profile.voice).toEqual({ banned_words: ["synergy", "leverage"] });
-    await expect(updateProfile(f.profile, { unset: ["nope.nothing"] }, NOW)).rejects.toThrow(/Nothing to remove/);
+    await expect(updateProfile(f.profile, { unset: ["offer.price_point"] }, NOW)).rejects.toThrow(/Nothing to remove/);
+    await expect(updateProfile(f.profile, { unset: ["nope.nothing"] }, NOW)).rejects.toThrow(/isn't a field that can be removed/);
   });
 
   it("keeps proof ids stable when appending", async () => {
@@ -97,6 +99,80 @@ describe("growth profile", () => {
   it("marks partial answers as weak", () => {
     const c = profileCompleteness({ audience: { who: "Founders", pains: ["churn"] }, goals: [{ type: "followers", description: "grow" }] });
     expect(c.weak.map((w) => w.field)).toEqual(expect.arrayContaining(["audience.pains", "goals"]));
+  });
+});
+
+describe("prototype pollution", () => {
+  const polluted = () => ({}) as Record<string, unknown>;
+  const intact = () => {
+    expect(polluted().polluted).toBeUndefined();
+    expect(polluted().x).toBeUndefined();
+    expect(typeof Object.prototype.toString).toBe("function");
+    expect(typeof Object.prototype.hasOwnProperty).toBe("function");
+  };
+
+  it.each(["__proto__.toString", "__proto__", "constructor.prototype.toString", "prototype", "voice.constructor", "Voice.notes", "voice..notes", "voice.0", ""])("unsetPath refuses the path %j", (path) => {
+    expect(() => unsetPath({ voice: { notes: "n" } }, path)).toThrow(/isn't a valid field path/);
+    intact();
+  });
+
+  it("walks own properties only and checks the path against the schema", () => {
+    const inherited = Object.create({ voice: { notes: "inherited" } }) as Record<string, unknown>;
+    expect(unsetPath(inherited, "voice.notes")).toBe(false);
+    expect((Object.getPrototypeOf(inherited) as { voice: { notes: string } }).voice.notes).toBe("inherited");
+    const own = { voice: { notes: "n", banned_words: ["x"] } };
+    expect(unsetPath(own, "voice.notes", profileSchema)).toBe(true);
+    expect(own).toEqual({ voice: { banned_words: ["x"] } });
+    expect(() => unsetPath(own, "voice.unknown", profileSchema)).toThrow(/isn't a field/);
+    expect(() => unsetPath(own, "proof_bank.title", profileSchema)).toThrow(/isn't a field/); // not into lists
+    expect(schemaHasPath(profileSchema, ["visuals", "colors", "primary"])).toBe(true);
+  });
+
+  it("deepMerge and appendLists refuse prototype keys at any depth and copy only own keys", () => {
+    for (const bad of ['{"__proto__":{"polluted":true}}', '{"voice":{"constructor":{"prototype":{"polluted":true}}}}', '{"proof_bank":[{"__proto__":{"polluted":true}}]}']) {
+      expect(() => deepMerge({}, JSON.parse(bad))).toThrow(/isn't allowed as a field name/);
+      expect(() => appendLists({}, JSON.parse(bad))).toThrow(/isn't allowed as a field name/);
+    }
+    intact();
+    const base = JSON.parse('{"__proto__":{"x":1},"a":1}') as Record<string, unknown>;
+    const merged = deepMerge(base, { b: 2 });
+    expect(Object.keys(merged)).toEqual(["a", "b"]);
+    expect(Object.getPrototypeOf(merged)).toBe(Object.prototype);
+    expect(pruneEmpty(base)).toEqual({ a: 1 });
+    expect(Object.keys(pruneEmpty(base))).toEqual(["a"]);
+  });
+
+  it("updateProfile rejects polluting changes and writes only schema fields", async () => {
+    const f = files();
+    await expect(updateProfile(f.profile, { patch: JSON.parse('{"__proto__":{"identity":{"role":"x"}}}') as GrowthProfile }, NOW)).rejects.toThrow(/isn't allowed/);
+    await expect(updateProfile(f.profile, { unset: ["__proto__.toString"] }, NOW)).rejects.toThrow(/isn't a valid field path/);
+    await expect(updateProfile(f.profile, { patch: { identity: { role: "COO" }, evil: 1 } as GrowthProfile }, NOW)).rejects.toThrow(/Unrecognized key/);
+    intact();
+    expect(existsSync(f.profile)).toBe(false); // nothing was written
+  });
+
+  it("drops prototype keys from tampered history lines", () => {
+    const [a, b] = parseHistory(
+      [
+        '{"kind":"profile","key":"profile","day":"2026-11-24","captured_at":"2026-11-24T08:00:00.000Z","followers":1,"changes":{"__proto__":{"polluted":true}},"__proto__":{"polluted":true}}',
+        '{"kind":"profile","key":"profile","day":"2026-11-24","captured_at":"2026-11-24T09:00:00.000Z","followers":2,"changes":{}}',
+      ].join("\n"),
+    ).records;
+    const merged = mergeRecord(a!, b!) as unknown as Record<string, unknown>;
+    expect(Object.keys(merged)).not.toContain("__proto__");
+    expect(Object.keys(merged.changes as object)).toEqual([]);
+    expect(merged.followers).toBe(2);
+    intact();
+  });
+
+  it("calendar updates only set slot fields", async () => {
+    const f = files();
+    await addSlots(f.calendar, [{ date: "2026-11-27", time: "08:00" }], "manual", {}, NOW);
+    const { slot } = await updateSlot(f.calendar, "slot-1", JSON.parse('{"notes":"ok","id":"slot-99","__proto__":{"polluted":true},"evil":1}') as SlotPatch, [], NOW);
+    expect(slot).toMatchObject({ id: "slot-1", notes: "ok" });
+    expect(Object.keys(slot)).not.toContain("evil");
+    expect(Object.keys(slot)).not.toContain("__proto__");
+    intact();
   });
 });
 
