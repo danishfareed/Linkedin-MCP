@@ -16,6 +16,10 @@ export interface Paths {
   auditFile: string;
   httpTokenFile: string;
   apiTokenFile: string;
+  /** Growth workspace: profile, strategy, ideas, calendar, analytics history. */
+  growthDir: string;
+  /** Images and carousels linkedin-mcp creates. The only part of the data folder that uploads may come from. */
+  mediaDir: string;
 }
 
 /**
@@ -42,6 +46,8 @@ export function resolvePaths(env: NodeJS.ProcessEnv = process.env): Paths {
     auditFile: join(state, "audit.jsonl"),
     httpTokenFile: join(home, "http-token"),
     apiTokenFile: join(state, "api-token.json"),
+    growthDir: join(home, "growth"),
+    mediaDir: join(home, "media"),
   };
 }
 
