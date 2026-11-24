@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
+import { ListToolsRequestSchema, type CallToolResult, type Tool, type ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import type { AppContext } from "../context.js";
 import { LinkedInMcpError, invalidInput, toMcpError } from "../errors.js";
@@ -75,9 +75,59 @@ export async function invoke<S extends z.ZodRawShape>(tool: ToolDef<S>, args: un
   }
 }
 
+/**
+ * JSON Schema keywords every major MCP client accepts in a tool's input
+ * schema. Gemini's function-calling schema is the strictest subset; the
+ * others accept more. Anything else is dropped from what clients see, while
+ * the server keeps validating with the full zod schema, so inputs are no less
+ * strict.
+ */
+const PORTABLE_KEYWORDS = new Set([
+  "type", "description", "properties", "required", "items", "enum", "default", "nullable", "anyOf",
+  "minimum", "maximum", "minLength", "maxLength", "pattern", "minItems", "maxItems", "title",
+]);
+
+/** Rewrites a JSON Schema into the portable subset. Exported for tests. */
+export function portableSchema(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(portableSchema);
+  if (!node || typeof node !== "object") return node;
+  const src = node as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(src)) {
+    if (key === "properties" && value && typeof value === "object") {
+      out.properties = Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, portableSchema(v)]));
+    } else if (key === "const") {
+      out.enum = [value];
+    } else if (key === "exclusiveMinimum" && typeof value === "number") {
+      out.minimum = src.type === "integer" ? value + 1 : value;
+    } else if (key === "exclusiveMaximum" && typeof value === "number") {
+      out.maximum = src.type === "integer" ? value - 1 : value;
+    } else if (key === "format") {
+      if (value === "date-time") out.format = value;
+    } else if (PORTABLE_KEYWORDS.has(key)) {
+      out[key] = portableSchema(value);
+    }
+  }
+  if (out.type === "object" && !out.properties) out.properties = {};
+  return out;
+}
+
+/** The tool list as clients see it, built from our own definitions with portable schemas. */
+export function describeTools(tools: ToolDef[]): Tool[] {
+  return tools.map((tool) => ({
+    name: tool.name,
+    title: tool.title,
+    description: tool.description,
+    inputSchema: portableSchema(z.toJSONSchema(z.object(tool.input), { io: "input", unrepresentable: "any" })) as Tool["inputSchema"],
+    annotations: { title: tool.title, ...tool.annotations },
+  }));
+}
+
 export function registerTools(server: McpServer, ctx: AppContext, tools: ToolDef[]): void {
+  const registered: ToolDef[] = [];
   for (const tool of tools) {
     if (ctx.config.readOnly && isSendingTool(tool)) continue;
+    registered.push(tool);
     server.registerTool(
       tool.name,
       {
@@ -89,4 +139,7 @@ export function registerTools(server: McpServer, ctx: AppContext, tools: ToolDef
       (args: unknown) => invoke(tool, args, ctx, { server }),
     );
   }
+  // Replace the SDK's tool list with the portable one (public API; calls are still handled by the SDK).
+  const listed = describeTools(registered);
+  server.server.setRequestHandler(ListToolsRequestSchema, () => ({ tools: listed }));
 }

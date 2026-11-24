@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ToolsetGroup } from "./config.js";
 import { type AppContext, VERSION } from "./context.js";
 import { contentTools } from "./tools/content.js";
 import { engagementTools } from "./tools/engagement.js";
@@ -45,9 +46,32 @@ export const ALL_TOOLS: ToolDef[] = [
   ...messagingTools,
 ] as unknown as ToolDef[];
 
+/** Which LINKEDIN_MCP_TOOLSETS group each tool belongs to. A test checks every tool is listed. */
+export const TOOLSET_OF: Record<string, ToolsetGroup> = {
+  session_status: "core", get_limits: "core", set_limits: "core", get_audit_log: "core", pause: "core", resume: "core",
+  confirm_action: "core", cancel_action: "core", confirm_batch: "core", batch_status: "core", connect_linkedin_api: "core", get_my_profile: "core",
+  create_post: "posting", schedule_post: "posting", list_scheduled_posts: "posting", delete_post: "posting",
+  get_my_posts: "posting", get_post_analytics: "posting", get_profile_analytics: "posting",
+  get_feed: "engagement", search_posts: "engagement", get_post_comments: "engagement", react_to_post: "engagement",
+  comment_on_post: "engagement", reply_to_comment: "engagement", get_notifications: "engagement",
+  get_person_profile: "research", get_person_posts: "research", get_company_profile: "research", get_company_posts: "research",
+  search_people: "research", search_companies: "research",
+  search_jobs: "jobs", get_job_details: "jobs", get_saved_jobs: "jobs",
+  send_connection_request: "network", list_invitations: "network", respond_to_invitation: "network",
+  get_inbox: "network", get_conversation: "network", send_message: "network",
+  growth_profile: "growth", growth_strategy: "growth", growth_ideas: "growth", growth_calendar: "growth",
+  review_post: "growth", growth_report: "growth", get_playbook: "growth",
+  generate_image: "visuals", create_quote_card: "visuals", create_carousel: "visuals", list_media: "visuals", image_providers: "visuals",
+};
+
+/** The tools a client gets with these toolsets (unlisted tools default to core, so nothing silently disappears). */
+export function toolsFor(groups: readonly ToolsetGroup[]): ToolDef[] {
+  return ALL_TOOLS.filter((t) => groups.includes(TOOLSET_OF[t.name] ?? "core"));
+}
+
 export function createServer(ctx: AppContext): McpServer {
   const server = new McpServer({ name: "linkedin-mcp", title: "LinkedIn MCP", version: VERSION }, { instructions: INSTRUCTIONS });
-  registerTools(server, ctx, ALL_TOOLS);
+  registerTools(server, ctx, toolsFor(ctx.config.toolsets));
   registerPlaybook(server);
   return server;
 }

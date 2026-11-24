@@ -68,6 +68,7 @@ export const sessionTools = [
         paused: breaker.open ? { reason: breaker.reason, since: breaker.tripped_at, until: breaker.until, note: breaker.note } : null,
         warmup: limits.warmup,
         read_only: ctx.config.readOnly,
+        toolsets: ctx.config.toolsets,
         official_api: { ...(await apiStatus(ctx.config.paths, ctx.config.api, ctx.clock())), posts_via: ctx.config.postVia },
         dry_run: ctx.config.dryRun,
         working_hours: ctx.config.workingHours,

@@ -52,6 +52,33 @@ export function resolvePaths(env: NodeJS.ProcessEnv = process.env): Paths {
   };
 }
 
+/** Groups of tools a client loads. Fewer tools means less context and fits clients with tool limits. */
+export const TOOLSET_GROUPS = ["core", "posting", "engagement", "research", "jobs", "network", "growth", "visuals"] as const;
+export type ToolsetGroup = (typeof TOOLSET_GROUPS)[number];
+export const TOOLSET_PRESETS: Record<string, readonly ToolsetGroup[]> = {
+  all: TOOLSET_GROUPS,
+  creator: ["core", "posting", "engagement", "growth", "visuals"],
+  outreach: ["core", "research", "jobs", "network"],
+  lite: ["core", "posting", "engagement"],
+};
+
+/** Parses "creator,jobs" into groups. core is always included. Unknown names are an error, not ignored. */
+export function parseToolsets(value: string | readonly string[] | undefined): ToolsetGroup[] {
+  const names = (typeof value === "string" ? value.split(",") : (value ?? ["all"])).map((n) => n.trim().toLowerCase()).filter(Boolean);
+  const groups = new Set<ToolsetGroup>(["core"]);
+  for (const name of names.length ? names : ["all"]) {
+    const preset = TOOLSET_PRESETS[name];
+    if (preset) preset.forEach((g) => groups.add(g));
+    else if ((TOOLSET_GROUPS as readonly string[]).includes(name)) groups.add(name as ToolsetGroup);
+    else {
+      throw invalidInput(
+        `Unknown toolset "${name}". Use presets (${Object.keys(TOOLSET_PRESETS).join(", ")}) or groups (${TOOLSET_GROUPS.join(", ")}), comma-separated.`,
+      );
+    }
+  }
+  return TOOLSET_GROUPS.filter((g) => groups.has(g));
+}
+
 /** How posts are published: the official API when connected (auto), always the API, or always the browser. */
 export const POST_VIA = ["auto", "api", "browser"] as const;
 export type PostVia = (typeof POST_VIA)[number];
@@ -131,6 +158,7 @@ export const fileConfigSchema = z
       })
       .partial(),
     postVia: z.enum(POST_VIA),
+    toolsets: z.array(z.string()),
     images: imageSettings,
     brand: brandSettings,
   })
@@ -164,6 +192,8 @@ export interface Config {
   postVia: PostVia;
   images: { provider: ImageProviderId | undefined; model: string | undefined; models: Partial<Record<ImageProviderId, string>>; timeoutSeconds: number };
   brand: BrandSettings;
+  /** Tool groups to load (core is always on). */
+  toolsets: ToolsetGroup[];
 }
 
 export interface BrandSettings {
@@ -273,6 +303,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       version: env.LINKEDIN_MCP_API_VERSION?.trim() || file.api?.version,
     },
     postVia: parsePostVia(env.LINKEDIN_MCP_POST_VIA) ?? file.postVia ?? "auto",
+    toolsets: parseToolsets(env.LINKEDIN_MCP_TOOLSETS?.trim() ? env.LINKEDIN_MCP_TOOLSETS : file.toolsets),
     images: {
       provider: parseEnum("LINKEDIN_MCP_IMAGE_PROVIDER", env.LINKEDIN_MCP_IMAGE_PROVIDER, IMAGE_PROVIDERS) ?? file.images?.provider,
       model: env.LINKEDIN_MCP_IMAGE_MODEL?.trim() || file.images?.model,
