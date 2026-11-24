@@ -1,9 +1,26 @@
+import type { LookupFunction } from "node:net";
 import type { AspectRatio, ImageProviderId } from "./constants.js";
 
 export type FetchFn = typeof fetch;
 
 /** DNS lookup returning every address for a host (dns.promises.lookup with all: true). */
 export type LookupFn = (hostname: string) => Promise<{ address: string; family: number }[]>;
+
+/** A response from the download transport. Header names are matched case-insensitively. */
+export interface DownloadResponse {
+  status: number;
+  header(name: string): string | undefined;
+  body: AsyncIterable<Uint8Array>;
+  /** Stop reading and close the connection. */
+  close(): void;
+}
+
+/**
+ * Fetch one URL for a download, without following redirects. `lookup` is
+ * the Node-style lookup the connection must use, so the address checked is
+ * the address connected to. Injectable so tests never touch the network.
+ */
+export type DownloadTransport = (url: URL, init: { signal: AbortSignal; lookup: LookupFunction }) => Promise<DownloadResponse>;
 
 /** What the assistant asks for, provider-agnostic. */
 export interface GenerateRequest {
@@ -47,6 +64,8 @@ export interface ProviderDeps {
   random: () => number;
   /** DNS for download checks; the system resolver when absent. */
   lookup?: LookupFn;
+  /** How downloads connect; node:https with the pinned lookup when absent. */
+  transport?: DownloadTransport;
 }
 
 export interface ProviderInfo {

@@ -9,8 +9,9 @@ import { imageSize, sniffImage } from "../../src/visuals/image-file.js";
 import { listMedia, slugify } from "../../src/visuals/media.js";
 import { chooseProvider, providerStatus } from "../../src/visuals/providers/index.js";
 import type { ImageSettings } from "../../src/visuals/providers/index.js";
-import { clean, isPrivateAddress, providerHttpError } from "../../src/visuals/net.js";
-import type { LookupFn } from "../../src/visuals/types.js";
+import { PrivateAddressError, clean, downloadImage, isPrivateAddress, pinnedLookup, providerHttpError } from "../../src/visuals/net.js";
+import type { DownloadTransport, LookupFn } from "../../src/visuals/types.js";
+import type { LookupAddress } from "node:dns";
 import { tempDir } from "./helpers.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -61,10 +62,42 @@ function fakeLookup(overrides: Record<string, string> = {}): LookupFn {
   return async (host) => [{ address: overrides[host] ?? "93.184.216.34", family: (overrides[host] ?? "").includes(":") ? 6 : 4 }];
 }
 
+/**
+ * A download transport for tests: like a real socket it must resolve the
+ * host through the lookup it's given (the pinned, checked one) before
+ * "connecting", then answers from the fake fetch's route table.
+ */
+function viaFetch(fetch: typeof globalThis.fetch, connected: { host: string; addresses: string[] }[] = []): DownloadTransport {
+  return async (url, { signal, lookup }) => {
+    const addresses = await new Promise<LookupAddress[]>((resolve, reject) =>
+      lookup(url.hostname, { all: true }, (err, address) => (err ? reject(err) : resolve(address as LookupAddress[]))),
+    );
+    connected.push({ host: url.hostname, addresses: addresses.map((a) => a.address) });
+    const res = await fetch(url.href, { signal });
+    return {
+      status: res.status,
+      header: (name) => res.headers.get(name) ?? undefined,
+      body: (async function* () {
+        if (res.body) for (let r = res.body.getReader(), c = await r.read(); !c.done; c = await r.read()) yield c.value;
+      })(),
+      close: () => void res.body?.cancel().catch(() => undefined),
+    };
+  };
+}
+
 function setup(env: NodeJS.ProcessEnv, fetch: typeof globalThis.fetch, dns: Record<string, string> = {}) {
   const media = join(tempDir(), "media");
-  const deps: GenerateDeps = { fetch, env, now: () => new Date(2026, 10, 24, 15, 30, 5), random: () => 0, sleep: async () => undefined, lookup: fakeLookup(dns) };
-  return { media, deps };
+  const connected: { host: string; addresses: string[] }[] = [];
+  const deps: GenerateDeps = {
+    fetch,
+    env,
+    now: () => new Date(2026, 10, 24, 15, 30, 5),
+    random: () => 0,
+    sleep: async () => undefined,
+    lookup: fakeLookup(dns),
+    transport: viaFetch(fetch, connected),
+  };
+  return { media, deps, connected };
 }
 
 const request = { prompt: "A quiet alpine lake at sunrise, editorial photography", aspectRatio: "4:5" as const, count: 1 };
@@ -483,12 +516,14 @@ describe("download safety (redirects and SSRF)", () => {
     ...cdn,
   ];
 
-  it("follows a redirect to another public host by hand, checking it first", async () => {
-    const { fetch, calls } = fakeFetch(higgsfieldRoutes([/cdn\.example\.com/, redirect("https://files.example.net/final.png")], [/files\.example\.net/, image()]));
-    const { media, deps } = setup(env, fetch);
+  it("follows a redirect to another public host by hand, resolving and checking each hop", async () => {
+    const { fetch } = fakeFetch(higgsfieldRoutes([/cdn\.example\.com/, redirect("https://files.example.net/final.png")], [/files\.example\.net/, image()]));
+    const { media, deps, connected } = setup(env, fetch);
     await expect(generateImages(request, settings(), media, deps)).resolves.toMatchObject({ images: [expect.anything()] });
-    const downloads = calls.filter((c) => /example\.(com|net)/.test(c.url));
-    expect(downloads.map((c) => c.redirect)).toEqual(["manual", "manual"]);
+    expect(connected).toEqual([
+      { host: "cdn.example.com", addresses: ["93.184.216.34"] },
+      { host: "files.example.net", addresses: ["93.184.216.34"] },
+    ]);
   });
 
   it("refuses redirects to IP literals, plain http, local names and private addresses, without fetching them", async () => {
@@ -532,13 +567,122 @@ describe("download safety (redirects and SSRF)", () => {
     expect(hop.calls.some((c) => c.url.includes("evil.example"))).toBe(false);
   });
 
-  it("classifies private, local and metadata addresses", () => {
-    for (const ip of ["127.0.0.1", "10.1.2.3", "172.16.0.1", "172.31.255.255", "192.168.0.1", "169.254.169.254", "100.64.0.1", "100.100.100.200", "0.0.0.0", "168.63.129.16", "::", "::1", "fc00::1", "fd00:ec2::254", "fe80::1", "::ffff:127.0.0.1", "::ffff:7f00:1", "64:ff9b::a00:1", "not-an-ip"]) {
-      expect(isPrivateAddress(ip), ip).toBe(true);
-    }
-    for (const ip of ["93.184.216.34", "172.32.0.1", "100.128.0.1", "8.8.8.8", "2606:4700:4700::1111", "::ffff:8.8.8.8"]) {
-      expect(isPrivateAddress(ip), ip).toBe(false);
-    }
+  it("checks the address the connection uses, so a host can't rebind between check and connect", async () => {
+    // A hostile resolver: public on the first answer, private on every later one.
+    let answers = 0;
+    const rebinding: LookupFn = async () => [{ address: answers++ === 0 ? "93.184.216.34" : "127.0.0.1", family: 4 }];
+    const { fetch } = fakeFetch(higgsfieldRoutes([/cdn\.example\.com/, image()]));
+    const { media, deps, connected } = setup(env, fetch);
+    deps.lookup = rebinding;
+    await generateImages(request, settings(), media, deps);
+    // One resolution per connection, and the connection got exactly the checked answer.
+    expect(answers).toBe(1);
+    expect(connected).toEqual([{ host: "cdn.example.com", addresses: ["93.184.216.34"] }]);
+
+    // An answer with any private address is refused outright.
+    const mixed = fakeFetch(higgsfieldRoutes([/cdn\.example\.com/, image()]));
+    const b = setup(env, mixed.fetch);
+    b.deps.lookup = async () => [
+      { address: "93.184.216.34", family: 4 },
+      { address: "10.0.0.7", family: 4 },
+    ];
+    expect((await rejection(generateImages(request, settings(), b.media, b.deps))).message).toMatch(/private or local address/);
+    expect(mixed.calls.some((c) => c.url.includes("cdn.example.com"))).toBe(false);
+  });
+
+  it("pins lookups: only checked addresses, filtered by family, never a private one", async () => {
+    const lookup = pinnedLookup(async () => [
+      { address: "93.184.216.34", family: 4 },
+      { address: "2606:4700:4700::1111", family: 6 },
+    ]);
+    const call = (options: { all?: boolean; family?: number }) =>
+      new Promise<{ err: NodeJS.ErrnoException | null; address: unknown; family?: number }>((resolve) => lookup("cdn.example.com", options, (err, address, family) => resolve({ err, address, family })));
+    expect(await call({ all: true })).toMatchObject({ err: null, address: [{ address: "93.184.216.34", family: 4 }, { address: "2606:4700:4700::1111", family: 6 }] });
+    expect(await call({})).toMatchObject({ err: null, address: "93.184.216.34", family: 4 });
+    expect(await call({ family: 6 })).toMatchObject({ err: null, address: "2606:4700:4700::1111", family: 6 });
+
+    const bad = pinnedLookup(async () => [{ address: "169.254.169.254", family: 4 }]);
+    const err = await new Promise<NodeJS.ErrnoException | null>((resolve) => bad("evil.example", { all: true }, (e) => resolve(e)));
+    expect(err).toBeInstanceOf(PrivateAddressError);
+    expect(err?.code).toBe("EPRIVATE");
+  });
+
+  it("makes the real https transport use the pinned lookup (refused before any connection)", async () => {
+    const ctx = { label: "Test", envHint: "X", billingUrl: "https://example.com", secrets: [] };
+    const deps = { fetch: globalThis.fetch, signal: new AbortController().signal, sleep: async () => undefined, random: () => 0, lookup: async () => [{ address: "127.0.0.1", family: 4 }] };
+    const err = await rejection(downloadImage(ctx, deps, "https://pinned.example/x.png", { allowHosts: null }));
+    expect(err.message).toMatch(/private or local address/);
+  });
+
+  it("enforces the size cap while streaming, even without a content-length", async () => {
+    const ctx = { label: "Test", envHint: "X", billingUrl: "https://example.com", secrets: [] };
+    let closed = false;
+    const transport: DownloadTransport = async (url, { lookup }) => {
+      await new Promise((resolve, reject) => lookup(url.hostname, { all: true }, (err) => (err ? reject(err) : resolve(null))));
+      return {
+        status: 200,
+        header: () => undefined,
+        body: (async function* () {
+          for (let i = 0; i < 100; i++) yield new Uint8Array(1024);
+        })(),
+        close: () => (closed = true),
+      };
+    };
+    const deps = { fetch: globalThis.fetch, signal: new AbortController().signal, sleep: async () => undefined, random: () => 0, lookup: fakeLookup(), transport };
+    const err = await rejection(downloadImage(ctx, deps, "https://cdn.example.com/x.png", { allowHosts: null, maxBytes: 10 * 1024 }));
+    expect(err.message).toMatch(/larger than/);
+    expect(closed).toBe(true);
+  });
+});
+
+describe("address classification", () => {
+  // [address, private?] on both sides of every range boundary.
+  const ipv4: [string, boolean][] = [
+    ["0.0.0.0", true], ["0.255.255.255", true], ["1.0.0.0", false],
+    ["9.255.255.255", false], ["10.0.0.0", true], ["10.255.255.255", true], ["11.0.0.0", false],
+    ["100.63.255.255", false], ["100.64.0.0", true], ["100.127.255.255", true], ["100.128.0.0", false],
+    ["126.255.255.255", false], ["127.0.0.0", true], ["127.255.255.255", true], ["128.0.0.0", false],
+    ["169.253.255.255", false], ["169.254.0.0", true], ["169.254.169.254", true], ["169.254.255.255", true], ["169.255.0.0", false],
+    ["172.15.255.255", false], ["172.16.0.0", true], ["172.31.255.255", true], ["172.32.0.0", false],
+    ["191.255.255.255", false], ["192.0.0.0", true], ["192.0.0.255", true], ["192.0.1.0", false],
+    ["192.0.1.255", false], ["192.0.2.0", true], ["192.0.2.255", true], ["192.0.3.0", false],
+    ["192.88.98.255", false], ["192.88.99.0", true], ["192.88.99.255", true], ["192.88.100.0", false],
+    ["192.167.255.255", false], ["192.168.0.0", true], ["192.168.255.255", true], ["192.169.0.0", false],
+    ["198.17.255.255", false], ["198.18.0.0", true], ["198.19.255.255", true], ["198.20.0.0", false],
+    ["198.51.99.255", false], ["198.51.100.0", true], ["198.51.100.255", true], ["198.51.101.0", false],
+    ["203.0.112.255", false], ["203.0.113.0", true], ["203.0.113.255", true], ["203.0.114.0", false],
+    ["223.255.255.255", false], ["224.0.0.0", true], ["239.255.255.255", true],
+    ["240.0.0.0", true], ["255.255.255.254", true], ["255.255.255.255", true],
+    ["168.63.129.15", false], ["168.63.129.16", true], ["168.63.129.17", false],
+    ["8.8.8.8", false], ["93.184.216.34", false],
+  ];
+  const ipv6: [string, boolean][] = [
+    // only global unicast 2000::/3
+    ["1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", true], ["2000::", false], ["3fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", false], ["4000::", true],
+    ["2606:4700:4700::1111", false], ["fc00::1", true], ["fd00:ec2::254", true], ["fe80::1", true], ["ff02::1", true],
+    // documentation 2001:db8::/32
+    ["2001:db7:ffff:ffff:ffff:ffff:ffff:ffff", false], ["2001:db8::", true], ["2001:db8:ffff:ffff:ffff:ffff:ffff:ffff", true], ["2001:db9::", false],
+    // Teredo 2001::/32
+    ["2000:ffff:ffff:ffff:ffff:ffff:ffff:ffff", false], ["2001::", true], ["2001:0:ffff:ffff:ffff:ffff:ffff:ffff", true], ["2001:1::", false],
+    // 6to4 2002::/16
+    ["2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff", false], ["2002::", true], ["2002:ffff:ffff:ffff:ffff:ffff:ffff:ffff", true], ["2003::", false],
+    // NAT64, even with a public IPv4 inside
+    ["64:ff9b::808:808", true], ["64:ff9b::", true], ["64:ff9b:1::", true], ["64:ff9b:1:ffff:ffff:ffff:ffff:ffff", true],
+    // embedded IPv4: judged by the IPv4 address
+    ["::ffff:8.8.8.8", false], ["::ffff:10.0.0.1", true], ["::ffff:127.0.0.1", true], ["::ffff:7f00:1", true], ["::ffff:169.254.169.254", true],
+    ["::8.8.8.8", false], ["::10.0.0.1", true], ["::", true], ["::1", true],
+    // just outside the embedded forms: not global unicast, so refused
+    ["::fffe:808:808", true], ["::1:ffff:808:808", true],
+  ];
+
+  it.each(ipv4)("IPv4 %s private=%s", (ip, expected) => {
+    expect(isPrivateAddress(ip)).toBe(expected);
+  });
+  it.each(ipv6)("IPv6 %s private=%s", (ip, expected) => {
+    expect(isPrivateAddress(ip)).toBe(expected);
+  });
+  it("treats anything that isn't an IP as private", () => {
+    for (const s of ["", "localhost", "999.1.1.1", "::g", "1.2.3"]) expect(isPrivateAddress(s), s).toBe(true);
   });
 });
 

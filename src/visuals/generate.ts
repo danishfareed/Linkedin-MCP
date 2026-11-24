@@ -5,7 +5,7 @@ import { EXTENSION, POSTABLE, imageSize, sniffImage } from "./image-file.js";
 import { saveMedia, slugify } from "./media.js";
 import { type ProviderContext, downloadImage, sleep, systemLookup } from "./net.js";
 import { type ImageSettings, chooseProvider } from "./providers/index.js";
-import type { Cost, FetchFn, GenerateRequest, LookupFn, ProviderImage } from "./types.js";
+import type { Cost, DownloadTransport, FetchFn, GenerateRequest, LookupFn, ProviderImage } from "./types.js";
 
 /**
  * Provider-agnostic generation: pick the provider and model, run it under a
@@ -23,6 +23,8 @@ export interface GenerateDeps {
   sleep: (ms: number, signal?: AbortSignal) => Promise<void>;
   /** DNS for download checks; the system resolver when absent. */
   lookup?: LookupFn;
+  /** How downloads connect; node:https with a pinned, checked lookup when absent. */
+  transport?: DownloadTransport;
 }
 
 export const defaultGenerateDeps = (): GenerateDeps => ({ fetch: globalThis.fetch, env: process.env, now: () => new Date(), random: Math.random, sleep, lookup: systemLookup });
@@ -51,7 +53,7 @@ export interface GenerateOptions extends GenerateRequest {
 
 async function toBytes(img: ProviderImage, ctx: ProviderContext, allowHosts: readonly string[] | null, deps: GenerateDeps, signal: AbortSignal): Promise<Buffer> {
   if ("data" in img) return img.data;
-  return downloadImage(ctx, { fetch: deps.fetch, signal, sleep: deps.sleep, random: deps.random, lookup: deps.lookup }, img.url, { allowHosts });
+  return downloadImage(ctx, { fetch: deps.fetch, signal, sleep: deps.sleep, random: deps.random, lookup: deps.lookup, transport: deps.transport }, img.url, { allowHosts });
 }
 
 export async function generateImages(opts: GenerateOptions, settings: ImageSettings, mediaDir: string, deps: GenerateDeps): Promise<GenerateResult> {
