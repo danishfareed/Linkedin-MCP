@@ -6,6 +6,8 @@ import { withBrowser } from "../context.js";
 import { LinkedInMcpError, toMcpError } from "../errors.js";
 import { readMyProfile } from "../linkedin/pages/profile.js";
 import { LIMIT_ACTIONS, LIMIT_TABLE, validateLimitChanges } from "../safety/limits.js";
+import { type Authorization, missingAppError, openInBrowser, redirectUri, startAuthorization } from "../linkedin/api/oauth.js";
+import { apiStatus } from "../linkedin/api/token.js";
 import { askUserToConfirm, clientCanConfirm } from "./confirm-in-client.js";
 import { LOCAL, READ, defineTool } from "./registry.js";
 import { executeWrite } from "./write.js";
@@ -21,6 +23,9 @@ function profileSaved(dir: string): boolean {
     return false;
   }
 }
+
+/** One consent flow at a time per server process. */
+let pendingAuth: Authorization | null = null;
 
 export const sessionTools = [
   defineTool({
@@ -63,6 +68,7 @@ export const sessionTools = [
         paused: breaker.open ? { reason: breaker.reason, since: breaker.tripped_at, until: breaker.until, note: breaker.note } : null,
         warmup: limits.warmup,
         read_only: ctx.config.readOnly,
+        official_api: { ...(await apiStatus(ctx.config.paths, ctx.config.api, ctx.clock())), posts_via: ctx.config.postVia },
         dry_run: ctx.config.dryRun,
         working_hours: ctx.config.workingHours,
         ...(problem ? { problem } : {}),
@@ -71,6 +77,38 @@ export const sessionTools = [
           : loggedIn === null
             ? { note: "Checked from saved state without opening the browser. Call again with verify=true to confirm the session on LinkedIn." }
             : {}),
+      };
+    },
+  }),
+
+  defineTool({
+    name: "connect_linkedin_api",
+    title: "Connect LinkedIn's official API",
+    description:
+      "Optional. Connects the user's own LinkedIn developer app so posts publish through LinkedIn's official API instead of the browser. " +
+      "Opens LinkedIn's consent page in the user's browser and returns straight away; after the user clicks Allow, session_status shows the connection. " +
+      "Needs the app's Client ID and Secret in the config (the `connect-api` terminal command walks through creating the app). Connections last 60 days.",
+    input: {},
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    handler: async (_args, ctx) => {
+      const { clientId, clientSecret, redirectPort } = ctx.config.api;
+      if (!clientId || !clientSecret) throw missingAppError();
+      if (!pendingAuth) {
+        const auth = await startAuthorization({ clientId, clientSecret, redirectPort }, ctx.config.paths);
+        pendingAuth = auth;
+        auth.done.then(
+          (t) => console.error(`[linkedin-mcp] LinkedIn API connected${t.name ? ` as ${t.name}` : ""}.`),
+          (err: unknown) => console.error(`[linkedin-mcp] LinkedIn API connection didn't complete: ${toMcpError(err).message}`),
+        ).finally(() => {
+          if (pendingAuth === auth) pendingAuth = null;
+        });
+        openInBrowser(auth.url);
+      }
+      return {
+        status: "waiting_for_approval",
+        next_step: "Approve the connection on the LinkedIn page that opened in your browser (or open the URL below), then ask me to check session_status.",
+        url: pendingAuth.url,
+        redirect_uri: redirectUri(redirectPort),
       };
     },
   }),

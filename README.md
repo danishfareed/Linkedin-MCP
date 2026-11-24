@@ -76,11 +76,43 @@ Paths for every OS, local HTTP mode and timeout settings are in **[docs/clients.
 npx @danishfareed/linkedin-mcp doctor
 ```
 
+**4. Optional: post through LinkedIn's official API.** If you have (or create) a LinkedIn developer app, posts can publish through LinkedIn's own API instead of the browser. See [Official API posting](#official-api-posting-optional).
+
 > [!TIP]
 > **Try it with nothing sent.** Add `"env": { "LINKEDIN_MCP_DRY_RUN": "true" }` to the config above: every action is previewed and simulated. Or use `LINKEDIN_MCP_READ_ONLY=true` to hide every tool that sends something.
 
 > [!NOTE]
 > **Early release (0.1).** The safety layer is tested end to end. The parts that read and click LinkedIn's pages are new, and LinkedIn changes its layout often, so some tools will need fixes as more people use them. Run `doctor` to check yours and [report anything broken](https://github.com/danishfareed/Linkedin-MCP/issues/new?template=broken-selector.yml).
+
+## Official API posting (optional)
+
+By default linkedin-mcp does everything through the browser. If you connect your own LinkedIn developer app, `create_post` publishes through LinkedIn's official [Posts API](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api) instead: no page layout to break, a definite result from LinkedIn, and the action you take most often goes through the route LinkedIn provides for it. Everything else (scheduling with LinkedIn's own scheduler, analytics, comments, messages) stays on the browser.
+
+```bash
+npx @danishfareed/linkedin-mcp connect-api
+```
+
+The command walks you through it:
+
+1. Create an app at [linkedin.com/developers/apps/new](https://www.linkedin.com/developers/apps/new) and link it to a LinkedIn Page you admin (a Page admin verifies the link).
+2. Under **Products**, add **Share on LinkedIn** and **Sign In with LinkedIn using OpenID Connect**. Both are self-serve.
+3. Under **Auth**, add the redirect URL `http://localhost:8765/callback`, then paste the Client ID and Client Secret when asked.
+4. Click **Allow** on LinkedIn's page. The connection is saved in your data folder, readable only by you.
+
+Already have a developer app from another tool? Reuse it; just make sure the redirect URL above is listed. Your assistant can also start the connection with the `connect_linkedin_api` tool once the app's ID and secret are in the config.
+
+| `LINKEDIN_MCP_POST_VIA` | What happens |
+|---|---|
+| `auto` (default) | API when connected, browser otherwise. The preview says which. |
+| `api` | Always the API. If it isn't connected, posting stops with a clear error instead of falling back. |
+| `browser` | Never the API. |
+
+Good to know:
+
+- LinkedIn's connections last 60 days and can't be refreshed by ordinary apps. `session_status` and `status` show the days left; run `connect-api` again to renew. When it lapses in `auto` mode, posts go back through the browser.
+- Text and images (one or several) go through the API. PDF carousels and scheduled posts use the browser.
+- Previews, your approval, caps, working hours and the audit log apply exactly the same way.
+- `disconnect-api` deletes the saved connection.
 
 ## How it works
 
@@ -207,6 +239,7 @@ linkedin-mcp never applies to jobs for you.
 | `pause` / `resume` | Stop all LinkedIn activity (optionally for N minutes) and start it again. |
 | `confirm_action` | Run a previewed action with its token, after you approve. |
 | `cancel_action` | Throw away a preview's token. |
+| `connect_linkedin_api` | Optional: connect your own LinkedIn developer app so posts publish through the official API. Opens LinkedIn's consent page. |
 
 </details>
 
@@ -282,6 +315,7 @@ The best-known open-source alternative is [stickerdaniel/linkedin-mcp-server](ht
 |---|---|---|
 | Install | `npx` (Node 20+), pinned and shrinkwrapped | `uvx` (Python), `.mcpb` bundle, Docker or plugins |
 | Create and schedule posts (images, PDF carousels) | Yes | No |
+| Post through LinkedIn's official API with your own app | Yes (optional) | No |
 | Post and profile analytics | Yes | No |
 | Comment, reply and react | Yes | No |
 | Notifications and invitation management | Yes | No |
@@ -325,6 +359,10 @@ Settings come from environment variables (set them under `env` in your client's 
 | `LINKEDIN_MCP_BROWSER_CHANNEL` | `auto` | `auto` (Chrome if installed, else bundled Chromium), `chrome`, `chromium` or `msedge`. |
 | `LINKEDIN_MCP_CHROME_PATH` | | Path to a specific Chrome executable. |
 | `LINKEDIN_MCP_HOME` | `~/.config/linkedin-mcp` | Where the profile, settings and state live. On Windows the default is `%LOCALAPPDATA%\linkedin-mcp`. |
+| `LINKEDIN_MCP_POST_VIA` | `auto` | `auto`, `api` or `browser`: how `create_post` publishes. See [Official API posting](#official-api-posting-optional). |
+| `LINKEDIN_MCP_CLIENT_ID` / `LINKEDIN_MCP_CLIENT_SECRET` | | Your LinkedIn developer app, for API posting. `connect-api` can save them to `config.json` for you. |
+| `LINKEDIN_MCP_API_REDIRECT_PORT` | `8765` | Port for the API connection's redirect URL (`http://localhost:<port>/callback`). |
+| `LINKEDIN_MCP_API_VERSION` | two months back | `LinkedIn-Version` header (YYYYMM), if LinkedIn rejects the default. |
 | `LINKEDIN_MCP_PORT` | `3333` | Port for `--http` mode. |
 | `LINKEDIN_MCP_HTTP_TOKEN` | generated | Bearer token for `--http` mode. |
 
@@ -350,6 +388,8 @@ npx @danishfareed/linkedin-mcp status           # sign-in, pause, warm-up and li
 npx @danishfareed/linkedin-mcp doctor           # check the browser, sign-in and every page it reads (read-only)
 npx @danishfareed/linkedin-mcp resume           # clear a pause after you've resolved a LinkedIn check
 npx @danishfareed/linkedin-mcp install-browser  # download the Chromium build this version expects
+npx @danishfareed/linkedin-mcp connect-api      # optional: post through LinkedIn's official API with your own app
+npx @danishfareed/linkedin-mcp disconnect-api   # remove the API connection
 npx @danishfareed/linkedin-mcp logout           # delete the saved browser profile
 npx @danishfareed/linkedin-mcp --http           # local Streamable HTTP on 127.0.0.1:3333/mcp, token required
 ```

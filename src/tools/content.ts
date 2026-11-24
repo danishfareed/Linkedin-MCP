@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { type AppContext, withBrowser } from "../context.js";
-import { invalidInput } from "../errors.js";
+import { LinkedInMcpError, invalidInput } from "../errors.js";
+import { publishViaApi } from "../linkedin/api/client.js";
+import { type ApiToken, readApiToken, tokenUsable } from "../linkedin/api/token.js";
 import type { Nav } from "../browser/session.js";
 import { type PostContent, listScheduled, publishPost, schedulePost } from "../linkedin/pages/composer.js";
 import { readMyPosts } from "../linkedin/pages/feed.js";
@@ -73,12 +75,50 @@ async function toContent(ctx: AppContext, p: PostParams): Promise<PostContent> {
   };
 }
 
+type PostRoute = { via: "api"; token: ApiToken } | { via: "browser"; reason: string };
+
+/**
+ * Where a post-now goes. postVia "auto" (default) uses the official API when
+ * it's connected, "api" requires it, "browser" never uses it. Document
+ * carousels always go through the browser.
+ */
+async function postRoute(ctx: AppContext, p: Pick<PostParams, "document">): Promise<PostRoute> {
+  const mode = ctx.config.postVia;
+  if (mode === "browser") return { via: "browser", reason: "LINKEDIN_MCP_POST_VIA is browser" };
+  if (p.document) {
+    if (mode === "api") throw invalidInput("Document carousels can't be posted through the API yet. Remove the document, or set LINKEDIN_MCP_POST_VIA to auto or browser.");
+    return { via: "browser", reason: "document carousels are posted through the browser" };
+  }
+  const token = await readApiToken(ctx.config.paths);
+  if (tokenUsable(token, ctx.clock())) return { via: "api", token };
+  if (mode === "api") {
+    throw new LinkedInMcpError(
+      "NOT_LOGGED_IN",
+      token ? "The LinkedIn API connection has expired." : "LinkedIn's API isn't connected.",
+      "Run `npx @danishfareed/linkedin-mcp connect-api`, or set LINKEDIN_MCP_POST_VIA to auto to post through the browser meanwhile.",
+    );
+  }
+  return { via: "browser", reason: token ? "the API connection has expired" : "the API isn't connected" };
+}
+
+function describeRoute(r: PostRoute): string {
+  return r.via === "api" ? `LinkedIn's official API${r.token.name ? ` (as ${r.token.name})` : ""}` : `the browser (${r.reason})`;
+}
+
 const publishWrite = defineWrite<PostParams>({
   kind: "create_post",
   limit: "post",
   target: () => null,
   text: (p) => p.text,
   run: async (nav, p, ctx) => publishPost(nav, await toContent(ctx, p)),
+  api: async (p, ctx) => {
+    const route = await postRoute(ctx, p);
+    if (route.via !== "api") return null;
+    return async (attempt) => {
+      const content = await toContent(ctx, p);
+      return publishViaApi(route.token, { text: content.text, images: content.images ?? [], visibility: content.visibility }, attempt, { version: ctx.config.api.version, now: ctx.clock });
+    };
+  },
 });
 
 const scheduleWrite = defineWrite<PostParams & { publish_at: string }>({
@@ -132,13 +172,15 @@ export const contentTools = [
     name: "create_post",
     title: "Create a LinkedIn post",
     description:
-      "Prepare a LinkedIn post (text, optional images or a PDF carousel) to publish now from the user's account. Counts against the daily post limit." +
+      "Prepare a LinkedIn post (text, optional images or a PDF carousel) to publish now from the user's account. Counts against the daily post limit. " +
+      "Posts go through LinkedIn's official API when the user has connected their own developer app (connect-api), otherwise through the browser; the preview says which." +
       PREVIEW_NOTE,
     input: postInput,
     annotations: WRITE_PREVIEW,
     handler: async (args, ctx) => {
       const params = await validatePost(ctx, args);
-      return prepareWrite(ctx, publishWrite, params, postPreview(params, { action: "Publish a post now" }));
+      const route = await postRoute(ctx, params);
+      return prepareWrite(ctx, publishWrite, params, postPreview(params, { action: "Publish a post now", published_via: describeRoute(route) }));
     },
   }),
 

@@ -4,6 +4,7 @@ import { readBrowserRecord } from "./browser/profile.js";
 import { type BrowserInfo, hasSessionCookie } from "./browser/session.js";
 import { type AppContext, VERSION, withBrowser } from "./context.js";
 import { toMcpError } from "./errors.js";
+import { apiStatus } from "./linkedin/api/token.js";
 import { compareVersions } from "./util/version.js";
 import { checkComposer } from "./linkedin/pages/composer.js";
 import { readFeedPosts } from "./linkedin/pages/feed.js";
@@ -135,6 +136,16 @@ export async function runDoctor(
   if (opts.checkUpdates !== false) {
     add({ name: "linkedin-mcp version", ...updateCheck(VERSION, await (opts.fetchLatest ?? fetchLatestVersion)()) });
   }
+
+  const api = await apiStatus(ctx.config.paths, ctx.config.api, ctx.clock());
+  add({
+    name: "Official API for posting (optional)",
+    ok: true,
+    level: api.connected ? (api.note ? "warn" : "ok") : api.configured || api.expires_at ? "warn" : "skip",
+    detail: api.connected
+      ? `Connected${api.name ? ` as ${api.name}` : ""}, ${api.expires_in_days} days left. Posting via: ${ctx.config.postVia}.${api.note ? ` ${api.note}` : ""}`
+      : (api.note ?? "Not set up."),
+  });
 
   const profileExists = existsSync(ctx.config.paths.profile);
   add({ name: "Browser profile", ok: profileExists, level: profileExists ? "ok" : "warn", detail: profileExists ? ctx.config.paths.profile : "Not created yet. Run the login command." });

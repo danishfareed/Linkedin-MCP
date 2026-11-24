@@ -1,4 +1,4 @@
-export const COMMANDS = ["serve", "login", "logout", "status", "doctor", "resume", "install-browser", "help", "version"] as const;
+export const COMMANDS = ["serve", "login", "logout", "status", "doctor", "resume", "install-browser", "connect-api", "disconnect-api", "help", "version"] as const;
 export type Command = (typeof COMMANDS)[number];
 
 export interface CliArgs {
@@ -103,6 +103,9 @@ Commands
   logout           Delete the saved browser profile
   install-browser  Download the Chromium build this version of linkedin-mcp uses
                    (only needed without Google Chrome, or after an update asks for it)
+  connect-api      Optional: connect your own LinkedIn developer app so posts publish
+                   through LinkedIn's official API (walks you through the setup)
+  disconnect-api   Remove the saved API connection (posts go through the browser)
   help             Show this help
   version          Print the version
 
@@ -121,6 +124,7 @@ Environment (overrides config.json in ~/.config/linkedin-mcp)
   LINKEDIN_MCP_WORKING_HOURS (e.g. 08:00-21:00 or off), LINKEDIN_MCP_IDLE_TIMEOUT_MINUTES,
   LINKEDIN_MCP_TOOL_TIMEOUT_SECONDS (default 55), LINKEDIN_MCP_CONFIRM_REACTIONS,
   LINKEDIN_MCP_CONFIRM_IN_CLIENT, LINKEDIN_MCP_BROWSER_CHANNEL, LINKEDIN_MCP_CHROME_PATH,
-  LINKEDIN_MCP_PORT, LINKEDIN_MCP_HTTP_TOKEN
+  LINKEDIN_MCP_PORT, LINKEDIN_MCP_HTTP_TOKEN, LINKEDIN_MCP_POST_VIA (auto, api or browser),
+  LINKEDIN_MCP_CLIENT_ID, LINKEDIN_MCP_CLIENT_SECRET, LINKEDIN_MCP_API_REDIRECT_PORT, LINKEDIN_MCP_API_VERSION
 
 Docs: https://github.com/danishfareed/Linkedin-MCP#readme`;

@@ -8,7 +8,9 @@ import { interactiveLogin } from "./browser/login.js";
 import { INSTALL_BROWSER_ARGS, patchrightCliPath, patchrightVersion } from "./browser/patchright.js";
 import { browserRecordFile } from "./browser/profile.js";
 import { hasSessionCookie } from "./browser/session.js";
-import { loadConfig } from "./config.js";
+import { loadConfig, patchFileConfig } from "./config.js";
+import { missingAppError, openInBrowser, redirectUri, startAuthorization } from "./linkedin/api/oauth.js";
+import { apiStatus, deleteApiToken } from "./linkedin/api/token.js";
 import { type AppContext, VERSION, createContext } from "./context.js";
 import { runDoctor } from "./doctor.js";
 import { LinkedInMcpError, toMcpError } from "./errors.js";
@@ -65,6 +67,9 @@ async function status(ctx: AppContext, args: CliArgs): Promise<void> {
   console.log(`Paused:        ${breaker.open ? `yes (${breaker.reason}) until ${breaker.until ?? "you resume"}` : "no"}`);
   console.log(`Warm-up:       ${limits.warmup.active ? `on, ends ${limits.warmup.ends_at ?? "14 days after first sign-in"}` : "finished"}`);
   console.log(`Dry run:       ${ctx.config.dryRun ? "on" : "off"}`);
+  const api = await apiStatus(ctx.config.paths, ctx.config.api, ctx.clock());
+  console.log(`Official API:  ${api.connected ? `connected${api.name ? ` as ${api.name}` : ""}, ${api.expires_in_days} days left` : api.expires_at ? "expired" : "not connected (optional)"}`);
+  console.log(`Posting via:   ${ctx.config.postVia}${ctx.config.postVia === "auto" ? (api.connected ? " (API)" : " (browser)") : ""}`);
   console.log(`Working hours: ${ctx.config.workingHours === "off" ? "off" : `${ctx.config.workingHours.start}-${ctx.config.workingHours.end}`}`);
   console.log("");
   console.log("Limit                              Today      Week");
@@ -103,6 +108,64 @@ async function doctor(ctx: AppContext, args: CliArgs): Promise<void> {
   const failed = checks.filter((c) => c.level === "fail");
   console.log(failed.length ? `\n${failed.length} check(s) failed. See https://github.com/danishfareed/Linkedin-MCP#troubleshooting` : "\nAll checks passed.");
   process.exitCode = failed.length ? 1 : 0;
+}
+
+function setupSteps(port: number): string {
+  return `Posting through LinkedIn's official API uses your own LinkedIn developer app. One-time setup (about 10 minutes):
+
+  1. Create an app at https://www.linkedin.com/developers/apps/new
+     LinkedIn asks you to link it to a LinkedIn Page you admin, and a Page admin verifies the link.
+  2. In Products, add "Share on LinkedIn" and "Sign In with LinkedIn using OpenID Connect" (both self-serve).
+  3. In Auth, add this redirect URL:  ${redirectUri(port)}
+  4. Copy the Client ID and Client Secret from the Auth tab, and paste them below.
+
+Already have an app (for example from another tool)? Reuse it: add the redirect URL above if it isn't there.
+`;
+}
+
+/** Reads a line without echoing it, for the client secret. */
+async function askHidden(question: string): Promise<string> {
+  const rl = createInterface({ input: process.stdin, output: process.stderr, terminal: true });
+  const out = rl as unknown as { _writeToOutput: (s: string) => void; output: NodeJS.WritableStream };
+  process.stderr.write(question);
+  out._writeToOutput = () => undefined;
+  const answer = await rl.question("");
+  rl.close();
+  process.stderr.write("\n");
+  return answer;
+}
+
+async function connectApi(ctx: AppContext): Promise<void> {
+  let { clientId, clientSecret } = ctx.config.api;
+  const { redirectPort } = ctx.config.api;
+  if (!clientId || !clientSecret) {
+    console.log(setupSteps(redirectPort));
+    if (!process.stdin.isTTY) throw missingAppError();
+    const rl = createInterface({ input: process.stdin, output: process.stderr });
+    clientId = (await rl.question("Client ID: ")).trim();
+    rl.close();
+    clientSecret = (await askHidden("Client Secret (hidden): ")).trim();
+    if (!clientId || !clientSecret) throw missingAppError();
+    await patchFileConfig(ctx.config.paths, (c) => ({ ...c, api: { ...c.api, clientId, clientSecret } }));
+    console.log(`Saved to ${ctx.config.paths.configFile} (readable only by you).\n`);
+  }
+  const auth = await startAuthorization({ clientId, clientSecret, redirectPort }, ctx.config.paths);
+  console.log(`Opening LinkedIn in your browser. Click "Allow".\nIf nothing opens, visit:\n${auth.url}\n\nWaiting up to 5 minutes...`);
+  openInBrowser(auth.url);
+  const token = await auth.done;
+  const until = new Date(token.expires_at).toLocaleDateString();
+  console.log(`\nConnected${token.name ? ` as ${token.name}` : ""}. The connection lasts until ${until} (LinkedIn allows 60 days); run connect-api again to renew it.`);
+  console.log(
+    ctx.config.postVia === "browser"
+      ? "LINKEDIN_MCP_POST_VIA is browser, so posts still go through the browser. Set it to auto to use the API."
+      : "Posts published now (create_post) will go through LinkedIn's API. Scheduled posts still use LinkedIn's own scheduler in the browser.",
+  );
+}
+
+async function disconnectApi(ctx: AppContext): Promise<void> {
+  const removed = await deleteApiToken(ctx.config.paths);
+  console.log(removed ? "Disconnected: the API token was deleted. Posts go through the browser." : "There was no API connection to remove.");
+  console.log("To revoke access on LinkedIn's side too, remove the app under Settings & Privacy → Data privacy → Permitted services.");
 }
 
 /**
@@ -168,6 +231,10 @@ async function main(): Promise<void> {
       return;
     case "logout":
       return logout(ctx, args);
+    case "connect-api":
+      return connectApi(ctx);
+    case "disconnect-api":
+      return disconnectApi(ctx);
   }
 }
 

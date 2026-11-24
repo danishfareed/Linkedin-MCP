@@ -20,6 +20,13 @@ export interface WriteSpec<P> {
   target: (params: P) => string | null;
   text: (params: P) => string | null;
   run: (nav: Nav, params: P, ctx: AppContext) => Promise<unknown>;
+  /**
+   * Optional route through LinkedIn's official API. Resolves to a runner to
+   * use it, or null to use the browser (not connected, turned off, or content
+   * the API path doesn't handle). The runner calls attempt.commit() right
+   * before the request that publishes.
+   */
+  api?: (params: P, ctx: AppContext) => Promise<((attempt: WriteAttempt) => Promise<WriteResult>) | null>;
 }
 
 const executors = new Map<string, WriteSpec<never>>();
@@ -182,13 +189,18 @@ export async function executeWrite(ctx: AppContext, kind: string, params: unknow
     };
   }
 
+  // Decided before the cap is counted, so a misconfigured API route costs nothing.
+  const viaApi = spec.api ? await spec.api(params, ctx) : null;
+
   // Counted once, before any click. Nothing below consumes this cap again.
   if (spec.limit) await ctx.limits.consume(spec.limit);
   const attempt = new WriteAttempt();
-  const work = withBrowser(ctx, (nav) => {
-    bindAttempt(nav, attempt);
-    return spec.run(nav, params, ctx);
-  });
+  const work = viaApi
+    ? viaApi(attempt)
+    : withBrowser(ctx, (nav) => {
+        bindAttempt(nav, attempt);
+        return spec.run(nav, params, ctx);
+      });
   const settled = await settleWithin(work, writeBudgetMs(ctx.config.toolTimeoutMs));
 
   let result: WriteResult;

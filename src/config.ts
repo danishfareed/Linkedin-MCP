@@ -15,6 +15,7 @@ export interface Paths {
   accountFile: string;
   auditFile: string;
   httpTokenFile: string;
+  apiTokenFile: string;
 }
 
 /**
@@ -40,8 +41,13 @@ export function resolvePaths(env: NodeJS.ProcessEnv = process.env): Paths {
     accountFile: join(state, "account.json"),
     auditFile: join(state, "audit.jsonl"),
     httpTokenFile: join(home, "http-token"),
+    apiTokenFile: join(state, "api-token.json"),
   };
 }
+
+/** How posts are published: the official API when connected (auto), always the API, or always the browser. */
+export const POST_VIA = ["auto", "api", "browser"] as const;
+export type PostVia = (typeof POST_VIA)[number];
 
 const timeOfDay = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use 24-hour HH:MM, for example 08:00");
 
@@ -79,6 +85,15 @@ export const fileConfigSchema = z
       })
       .partial(),
     http: z.object({ port: z.number().int().min(1).max(65535), token: z.string().min(16) }).partial(),
+    api: z
+      .object({
+        clientId: z.string().min(1),
+        clientSecret: z.string().min(1),
+        redirectPort: z.number().int().min(1024).max(65535),
+        version: z.string().regex(/^\d{6}$/, "Use YYYYMM, for example 202609"),
+      })
+      .partial(),
+    postVia: z.enum(POST_VIA),
   })
   .partial();
 
@@ -105,6 +120,9 @@ export interface Config {
     viewport: { width: number; height: number };
   };
   http: { port: number; token: string | undefined };
+  /** Your own LinkedIn developer app, for posting through the official API. */
+  api: { clientId: string | undefined; clientSecret: string | undefined; redirectPort: number; version: string | undefined };
+  postVia: PostVia;
 }
 
 export const DEFAULT_WORKING_HOURS = { start: "08:00", end: "21:00" } as const;
@@ -195,7 +213,21 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       port: parseNumber(env.LINKEDIN_MCP_PORT) ?? file.http?.port ?? 3333,
       token: env.LINKEDIN_MCP_HTTP_TOKEN?.trim() || file.http?.token,
     },
+    api: {
+      clientId: env.LINKEDIN_MCP_CLIENT_ID?.trim() || file.api?.clientId,
+      clientSecret: env.LINKEDIN_MCP_CLIENT_SECRET?.trim() || file.api?.clientSecret,
+      redirectPort: parseNumber(env.LINKEDIN_MCP_API_REDIRECT_PORT) ?? file.api?.redirectPort ?? 8765,
+      version: env.LINKEDIN_MCP_API_VERSION?.trim() || file.api?.version,
+    },
+    postVia: parsePostVia(env.LINKEDIN_MCP_POST_VIA) ?? file.postVia ?? "auto",
   };
+}
+
+function parsePostVia(value: string | undefined): PostVia | undefined {
+  const v = value?.trim().toLowerCase();
+  if (!v) return undefined;
+  if ((POST_VIA as readonly string[]).includes(v)) return v as PostVia;
+  throw invalidInput(`LINKEDIN_MCP_POST_VIA must be auto, api or browser, got "${value}"`);
 }
 
 /** Merge a patch into config.json (used by set_limits). */

@@ -8,11 +8,16 @@ First release.
 
 ### Tools
 
-- 38 MCP tools for posting, scheduling, analytics, comments, reactions, notifications, research, jobs, invitations and messaging.
+- 39 MCP tools for posting, scheduling, analytics, comments, reactions, notifications, research, jobs, invitations and messaging.
 - Jobs: `search_jobs` (date posted, on-site/remote/hybrid, experience level, Easy Apply), `get_job_details` and `get_saved_jobs`. Read-only; linkedin-mcp never applies to jobs.
 - `get_person_posts` and `get_company_posts` for someone's recent posts.
 - `search_posts` can sort newest first and filter by photos, videos or documents.
 - Every list tool returns `complete` and a `note` when a list may be partial, instead of returning an empty list when the page wasn't recognised.
+
+### Official API posting (optional)
+
+- `connect-api` connects your own LinkedIn developer app (Share on LinkedIn + Sign In with LinkedIn) through a local OAuth flow, and `create_post` then publishes text and images through LinkedIn's Posts API. `LINKEDIN_MCP_POST_VIA` chooses `auto` (default), `api` or `browser`. Hashtags stay clickable and reserved characters are escaped so text posts as written.
+- `connect_linkedin_api` starts the same connection from your assistant; `session_status`, `status` and `doctor` show the days left on the 60-day connection.
 
 ### Sending safely
 
