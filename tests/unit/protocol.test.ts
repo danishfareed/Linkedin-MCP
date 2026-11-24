@@ -91,6 +91,7 @@ describe("approval in the AI client", () => {
       const r = await call("confirm_action", { confirmation_token: preview.body.confirmation_token });
       expect(r.isError).toBe(true);
       expect(r.body.error.code).toBe("USER_DECLINED");
+      expect(r.body.error.next_step).toMatch(/LINKEDIN_MCP_CONFIRM_IN_CLIENT=false/);
       expect(await ctx.audit.recent(10)).toEqual([]);
       // The token is spent: approving later needs a fresh preview.
       expect((await call("confirm_action", { confirmation_token: preview.body.confirmation_token })).body.error.code).toBe("CONFIRMATION_INVALID");

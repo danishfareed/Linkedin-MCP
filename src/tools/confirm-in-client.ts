@@ -70,6 +70,21 @@ export function confirmationMessage(kind: string, preview: Record<string, unknow
   return lines.join("\n").trim();
 }
 
+/**
+ * Some clients decline every dialog automatically (headless or autopilot
+ * modes, SDKs without a dialog handler). Say how to fix that, so a refusal
+ * nobody made doesn't look like a broken server.
+ */
+export function declinedInClient(action: string): LinkedInMcpError {
+  const base = userDeclined();
+  return new LinkedInMcpError(
+    "USER_DECLINED",
+    base.message,
+    `${base.nextStep} If nobody saw an approval dialog (for example a headless or autopilot mode that declines dialogs automatically), set LINKEDIN_MCP_CONFIRM_IN_CLIENT=false; previews and confirmation tokens still protect every send.`,
+    { dialog_result: action },
+  );
+}
+
 /** Resolves when the user approves in the client's dialog; throws USER_DECLINED otherwise. */
 export async function askUserToConfirm(server: McpServer, kind: string, preview: Record<string, unknown> | undefined): Promise<void> {
   let result;
@@ -95,5 +110,5 @@ export async function askUserToConfirm(server: McpServer, kind: string, preview:
     );
   }
   if (result.action === "accept" && result.content?.approve === true) return;
-  throw userDeclined();
+  throw declinedInClient(result.action);
 }

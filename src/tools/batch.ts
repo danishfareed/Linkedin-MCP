@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { AppContext } from "../context.js";
 import { invalidInput, toMcpError, userDeclined } from "../errors.js";
 import type { PendingAction } from "../safety/confirm.js";
-import { clientCanConfirm, confirmationMessage } from "./confirm-in-client.js";
+import { clientCanConfirm, confirmationMessage, declinedInClient } from "./confirm-in-client.js";
 import { defineTool } from "./registry.js";
 import { executeWrite } from "./write.js";
 
@@ -67,7 +67,7 @@ async function askForTicks(server: McpServer, actions: PendingAction[]): Promise
   } catch {
     throw userDeclined();
   }
-  if (result.action !== "accept") throw userDeclined();
+  if (result.action !== "accept") throw declinedInClient(result.action);
   const ticked = new Set<number>();
   for (let i = 1; i <= actions.length; i++) if (result.content?.[`item_${i}`] === true) ticked.add(i);
   if (!ticked.size) throw userDeclined();

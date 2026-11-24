@@ -1028,14 +1028,14 @@ The value is a comma-separated list of groups, presets or both:
 - **Groups:** `core`, `posting`, `engagement`, `research`, `jobs`, `network`, `growth`, `visuals`
 - **Presets:**
 
-| Preset | Groups | Tools (about) |
+| Preset | Groups | Tools |
 |---|---|---|
 | `all` (default) | every group | 53 |
-| `creator` | core, posting, engagement, growth, visuals | 37 |
-| `outreach` | core, research, jobs, network | 30 |
-| `lite` | core, posting, engagement | 25 |
+| `creator` | core, posting, engagement, growth, visuals | 38 |
+| `outreach` | core, research, jobs, network | 27 |
+| `lite` | core, posting, engagement | 26 |
 
-You can mix them. For example, `LINKEDIN_MCP_TOOLSETS=lite,growth` loads the `lite` preset plus the growth tools.
+`core` (approval, safety, status and your own profile: 12 tools) is always included. You can mix them. For example, `LINKEDIN_MCP_TOOLSETS=lite,growth` loads the `lite` preset plus the growth tools.
 
 ```json
 "env": {

@@ -52,19 +52,34 @@ Build a LinkedIn content strategy, plan your week, write and design posts and ca
 linkedin-mcp is a standard [MCP](https://modelcontextprotocol.io) server. It runs locally over stdio (or local Streamable HTTP), and its tool schemas use only the JSON Schema features every major client accepts.
 
 <!-- clients:start -->
-| AI client | How to add linkedin-mcp |
-|---|---|
-| **Claude Desktop** | Settings → Developer → Edit Config, paste the JSON below |
-| **Claude Code** | `claude mcp add linkedin --scope user -- npx -y @danishfareed/linkedin-mcp` |
-| **ChatGPT desktop / Codex** | Settings → MCP servers → Add server → STDIO, or `~/.codex/config.toml` |
-| **Cursor** | `~/.cursor/mcp.json` |
-| **VS Code (GitHub Copilot)** | `~/.copilot/mcp-config.json` or `.mcp.json` in a workspace |
-| **Devin Desktop (formerly Windsurf)** | `~/.config/devin/mcp_config.json` |
-| **Cline** | MCP Servers → Configure → `cline_mcp_settings.json` |
-| **Any other MCP client** | Command `npx`, arguments `-y @danishfareed/linkedin-mcp` |
+| AI client | Where linkedin-mcp goes | Notes |
+|---|---|---|
+| [Claude Desktop](docs/clients.md#claude-desktop) | Settings → Developer → Edit Config (`claude_desktop_config.json`) |  |
+| [Claude Code](docs/clients.md#claude-code) | `claude mcp add linkedin --scope user -- npx -y @danishfareed/linkedin-mcp` | Approval dialogs supported |
+| [ChatGPT desktop and Codex](docs/clients.md#chatgpt-desktop-app-and-codex) | Settings → MCP servers, or `~/.codex/config.toml` | Approval dialogs supported |
+| [Cursor](docs/clients.md#cursor) | `~/.cursor/mcp.json` or `.cursor/mcp.json` | Approval dialogs supported |
+| [VS Code (GitHub Copilot)](docs/clients.md#vs-code-github-copilot) | `~/.copilot/mcp-config.json` or `.mcp.json` | Set `"timeout": 60000` |
+| [Visual Studio](docs/clients.md#visual-studio) | `%USERPROFILE%\.mcp.json` or `<solution>\.mcp.json` |  |
+| [JetBrains AI Assistant](docs/clients.md#jetbrains-ai-assistant) | Settings → Tools → AI Assistant → Model Context Protocol |  |
+| [Junie (JetBrains)](docs/clients.md#junie) | `~/.junie/mcp/mcp.json` | 100-tool limit: use a preset |
+| [Devin Desktop (formerly Windsurf)](docs/clients.md#devin-desktop-formerly-windsurf) | `~/.config/devin/mcp_config.json` |  |
+| [Cline](docs/clients.md#cline) | `cline_mcp_settings.json` |  |
+| [Kilo Code](docs/clients.md#kilo-code) | `~/.config/kilo/kilo.jsonc` | Set `"timeout": 60000` |
+| [Continue](docs/clients.md#continue) | `~/.continue/config.yaml` | Agent mode |
+| [Zed](docs/clients.md#zed) | `settings.json` → `context_servers` |  |
+| [Goose](docs/clients.md#goose) | `~/.config/goose/config.yaml` | Approval dialogs supported |
+| [Gemini CLI](docs/clients.md#gemini-cli) | `~/.gemini/settings.json` |  |
+| [Kiro (formerly Amazon Q Developer CLI)](docs/clients.md#kiro-formerly-amazon-q-developer-cli) | `~/.kiro/settings/mcp.json` | Approval dialogs supported |
+| [Warp](docs/clients.md#warp) | Settings → Agents → MCP servers |  |
+| [LM Studio](docs/clients.md#lm-studio) | `~/.lmstudio/mcp.json` | Use `lite` for small local models |
+| [Jan](docs/clients.md#jan) | Settings → MCP Servers | Raise the tool timeout to 60 s |
+| [Msty Studio, 5ire, Cherry Studio, BoltAI](docs/clients.md#msty-studio) | Each app's MCP settings | Use a small toolset with local models |
+| [n8n](docs/clients.md#n8n) | MCP Client Tool node | Uses local HTTP mode |
+| [Claude Agent SDK, OpenAI Agents SDK, MCP SDKs](docs/clients.md#for-developers) | In your code |  |
+| **Any other MCP client** | Command `npx`, arguments `-y @danishfareed/linkedin-mcp` | |
 <!-- clients:end -->
 
-Every client's exact config, file paths for each OS, tool limits and timeouts: **[docs/clients.md](docs/clients.md)**. If your client caps the number of tools, set `LINKEDIN_MCP_TOOLSETS` (see [Configuration](#configuration)).
+ChatGPT on the web and claude.ai can't reach a server on your computer; use their desktop apps. Every client's exact config, file paths for each OS, tool limits and timeouts: **[docs/clients.md](docs/clients.md)**. If your client caps the number of tools, set `LINKEDIN_MCP_TOOLSETS` (see [Configuration](#configuration)).
 
 ## Why it's different
 
