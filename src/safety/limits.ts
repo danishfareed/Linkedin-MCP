@@ -171,49 +171,68 @@ export class Limits {
     };
   }
 
-  private check(state: LimitsState, action: LimitAction, now: Date, amount: number): void {
+  /**
+   * Checks the daily cap on `day` and the 7-day ceiling for every rolling
+   * window that contains `day`. `day` is today for things done now, and the
+   * publish day for scheduled posts, so a week planned in one session is
+   * held to the same pace as one posted day by day.
+   */
+  private check(state: LimitsState, action: LimitAction, now: Date, amount: number, day: Date = now): void {
     const spec = LIMIT_TABLE[action];
-    const cap = effectiveDailyCap(action, this.overrides(), isWarmup(state, now));
-    const today = usedOn(state, localDayKey(now), action);
-    if (today + amount > cap) {
-      const resetsAt = nextLocalMidnight(now);
+    const isToday = localDayKey(day) === localDayKey(now);
+    const onDay = isToday ? "today" : `on ${formatLocal(day).split(",")[0]}`;
+    const cap = effectiveDailyCap(action, this.overrides(), isWarmup(state, day));
+    const used = usedOn(state, localDayKey(day), action);
+    if (used + amount > cap) {
+      const resetsAt = nextLocalMidnight(day);
       throw new LinkedInMcpError(
         "LIMIT_REACHED",
-        `Daily limit reached for ${spec.label.toLowerCase()}: ${today} of ${cap} used today.`,
-        `Wait until ${formatLocal(resetsAt)} for the daily limit to reset. Limits protect your account and are not queued.`,
-        { action, window: "day", used: today, cap, resets_at: resetsAt.toISOString() },
+        `Daily limit reached for ${spec.label.toLowerCase()}: ${used} of ${cap} used ${onDay}.`,
+        isToday
+          ? `Wait until ${formatLocal(resetsAt)} for the daily limit to reset. Limits protect your account and are not queued.`
+          : "Pick another day. Scheduled posts count against the day they publish, so a planned week keeps the same pace.",
+        { action, window: "day", day: localDayKey(day), used, cap, resets_at: resetsAt.toISOString() },
       );
     }
     if (spec.weekly !== null) {
-      const week = usedThisWeek(state, now, action);
-      if (week + amount > spec.weekly) {
-        const resetsAt = weeklyResetsAt(state, now, action);
-        throw new LinkedInMcpError(
-          "LIMIT_REACHED",
-          `Weekly limit reached for ${spec.label.toLowerCase()}: ${week} of ${spec.weekly} used in the last 7 days.`,
-          `Wait until ${formatLocal(resetsAt)}, when the oldest day drops out of the 7-day window.`,
-          { action, window: "week", used: week, cap: spec.weekly, resets_at: resetsAt.toISOString() },
-        );
+      for (let shift = 0; shift < 7; shift++) {
+        const windowEnd = addLocalDays(day, shift);
+        const inWindow = usedThisWeek(state, windowEnd, action);
+        if (inWindow + amount > spec.weekly) {
+          const resetsAt = isToday && shift === 0 ? weeklyResetsAt(state, now, action) : null;
+          throw new LinkedInMcpError(
+            "LIMIT_REACHED",
+            `Weekly limit reached for ${spec.label.toLowerCase()}: ${inWindow} of ${spec.weekly} already in the 7 days ending ${formatLocal(windowEnd).split(",")[0]}.`,
+            resetsAt
+              ? `Wait until ${formatLocal(resetsAt)}, when the oldest day drops out of the 7-day window.`
+              : "Spread posts out: no 7-day stretch can go over the weekly ceiling, including posts already scheduled.",
+            { action, window: "week", used: inWindow, cap: spec.weekly, ...(resetsAt ? { resets_at: resetsAt.toISOString() } : {}) },
+          );
+        }
       }
     }
   }
 
+
   /** Throws LIMIT_REACHED if `amount` more would exceed a cap. Does not count anything. */
-  async assertAvailable(action: LimitAction, amount = 1): Promise<void> {
+  /** `on`: the day the action takes effect, for scheduled posts. Defaults to today. */
+  async assertAvailable(action: LimitAction, amount = 1, opts: { on?: Date } = {}): Promise<void> {
     const state = await this.read();
-    this.check(state, action, this.clock(), amount);
+    const now = this.clock();
+    this.check(state, action, now, amount, opts.on ?? now);
   }
 
   /** Atomically checks and records usage. Throws LIMIT_REACHED without recording if over. */
-  async consume(action: LimitAction, amount = 1): Promise<void> {
+  async consume(action: LimitAction, amount = 1, opts: { on?: Date } = {}): Promise<void> {
     await updateJson<LimitsState>(this.file, EMPTY_STATE, (current) => {
       const now = this.clock();
+      const on = opts.on ?? now;
       const state = pruneDays({ ...EMPTY_STATE, ...current }, now);
-      this.check(state, action, now, amount);
-      const key = localDayKey(now);
-      const day = { ...(state.days[key] ?? {}) };
-      day[action] = (day[action] ?? 0) + amount;
-      return { ...state, days: { ...state.days, [key]: day } };
+      this.check(state, action, now, amount, on);
+      const key = localDayKey(on);
+      const counts = { ...(state.days[key] ?? {}) };
+      counts[action] = (counts[action] ?? 0) + amount;
+      return { ...state, days: { ...state.days, [key]: counts } };
     });
   }
 

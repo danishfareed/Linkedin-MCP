@@ -124,6 +124,7 @@ const publishWrite = defineWrite<PostParams>({
 const scheduleWrite = defineWrite<PostParams & { publish_at: string }>({
   kind: "schedule_post",
   limit: "post",
+  limitOn: (p) => new Date(p.publish_at),
   target: (p) => p.publish_at,
   text: (p) => p.text,
   run: async (nav, p, ctx) => {

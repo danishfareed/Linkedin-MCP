@@ -17,6 +17,8 @@ import { LIMIT_TABLE, type LimitAction, assertWorkingHours } from "../safety/lim
 export interface WriteSpec<P> {
   kind: string;
   limit: LimitAction | null;
+  /** The day the action counts against, when it isn't today (scheduled posts count on their publish day). */
+  limitOn?: (params: P) => Date;
   target: (params: P) => string | null;
   text: (params: P) => string | null;
   run: (nav: Nav, params: P, ctx: AppContext) => Promise<unknown>;
@@ -40,15 +42,15 @@ export function getExecutor(kind: string): WriteSpec<unknown> | undefined {
   return executors.get(kind) as WriteSpec<unknown> | undefined;
 }
 
-async function preflight(ctx: AppContext, spec: WriteSpec<unknown>): Promise<void> {
+async function preflight(ctx: AppContext, spec: WriteSpec<unknown>, params: unknown): Promise<void> {
   await ctx.breaker.assertClosed();
   assertWorkingHours(ctx.config.workingHours, ctx.clock());
-  if (spec.limit) await ctx.limits.assertAvailable(spec.limit);
+  if (spec.limit) await ctx.limits.assertAvailable(spec.limit, 1, { on: spec.limitOn?.(params) });
 }
 
 /** Validates against every safety rule, then issues a confirmation token. Sends nothing. */
 export async function prepareWrite<P>(ctx: AppContext, spec: WriteSpec<P>, params: P, preview: Record<string, unknown>): Promise<ConfirmationTicket> {
-  await preflight(ctx, spec as WriteSpec<unknown>);
+  await preflight(ctx, spec as WriteSpec<unknown>, params);
   return ctx.confirm.create({
     kind: spec.kind,
     params,
@@ -172,7 +174,7 @@ async function settleWithin(work: Promise<unknown>, ms: number): Promise<Settled
 export async function executeWrite(ctx: AppContext, kind: string, params: unknown, preview?: Record<string, unknown>): Promise<WriteOutcome> {
   const spec = getExecutor(kind);
   if (!spec) throw new Error(`No executor registered for "${kind}"`);
-  await preflight(ctx, spec);
+  await preflight(ctx, spec, params);
   const target = spec.target(params);
   const base = { tool: kind, target, text_hash: hashText(spec.text(params)) };
 
@@ -193,7 +195,7 @@ export async function executeWrite(ctx: AppContext, kind: string, params: unknow
   const viaApi = spec.api ? await spec.api(params, ctx) : null;
 
   // Counted once, before any click. Nothing below consumes this cap again.
-  if (spec.limit) await ctx.limits.consume(spec.limit);
+  if (spec.limit) await ctx.limits.consume(spec.limit, 1, { on: spec.limitOn?.(params) });
   const attempt = new WriteAttempt();
   const work = viaApi
     ? viaApi(attempt)
