@@ -96,13 +96,23 @@ export class ConfirmationManager {
    * executes, so a failed or repeated call can never send twice.
    */
   redeem(token: string): PendingAction {
+    return this.verify(token, true);
+  }
+
+  /** Validates a token without consuming it (to check a whole batch before using any of it). */
+  inspect(token: string): PendingAction {
+    return this.verify(token, false);
+  }
+
+  private verify(token: string, burn: boolean): PendingAction {
     const [id, mac] = token.trim().split(".");
     if (!id || !mac) throw invalid("That confirmation token is not valid.");
     const stored = this.pending.get(id);
     if (!stored) throw invalid("That confirmation token is unknown or was already used.");
-    this.pending.delete(id);
+    if (burn) this.pending.delete(id);
 
     if (this.clock().getTime() > stored.expiresAt) {
+      this.pending.delete(id);
       throw invalid("That confirmation token has expired (tokens last 10 minutes).");
     }
     const expected = Buffer.from(this.sign(id, hashParams(stored.kind, stored.params), stored.expiresAt));
