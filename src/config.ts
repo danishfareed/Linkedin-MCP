@@ -67,7 +67,9 @@ export const fileConfigSchema = z
       z.literal("off"),
       z.object({ start: timeOfDay, end: timeOfDay }),
     ]),
-    confirm: z.object({ reactions: z.boolean() }).partial(),
+    readOnly: z.boolean(),
+    toolTimeoutSeconds: z.number().int().min(20).max(600),
+    confirm: z.object({ reactions: z.boolean(), inClient: z.boolean() }).partial(),
     limits: limitOverrides,
     browser: z
       .object({
@@ -90,6 +92,12 @@ export interface Config {
   idleTimeoutMs: number;
   workingHours: { start: string; end: string } | "off";
   confirmReactions: boolean;
+  /** Ask the user directly through the MCP client (form elicitation) when it supports that. */
+  confirmInClient: boolean;
+  /** Hide every tool that sends something to LinkedIn. */
+  readOnly: boolean;
+  /** Budget for one tool call, kept under common client timeouts (60 s). */
+  toolTimeoutMs: number;
   limits: LimitOverrides;
   browser: {
     channel: "auto" | "chrome" | "chromium" | "msedge";
@@ -166,6 +174,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     idleTimeoutMs: Math.max(1, idleMinutes) * 60_000,
     workingHours: envHours ? parseWorkingHours(envHours) : (file.workingHours ?? { ...DEFAULT_WORKING_HOURS }),
     confirmReactions: parseBool(env.LINKEDIN_MCP_CONFIRM_REACTIONS) ?? file.confirm?.reactions ?? true,
+    confirmInClient: parseBool(env.LINKEDIN_MCP_CONFIRM_IN_CLIENT) ?? file.confirm?.inClient ?? true,
+    readOnly: parseBool(env.LINKEDIN_MCP_READ_ONLY) ?? file.readOnly ?? false,
+    toolTimeoutMs: Math.min(600, Math.max(20, parseNumber(env.LINKEDIN_MCP_TOOL_TIMEOUT_SECONDS) ?? file.toolTimeoutSeconds ?? 55)) * 1000,
     limits: file.limits ?? {},
     browser: {
       channel: (channel as Config["browser"]["channel"] | undefined) ?? file.browser?.channel ?? "auto",

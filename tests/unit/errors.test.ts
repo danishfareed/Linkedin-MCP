@@ -27,3 +27,12 @@ describe("toMcpError", () => {
     expect(other.message).toBe("Unexpected error: boom");
   });
 });
+
+describe("isEmptyState", () => {
+  it("recognises LinkedIn's empty-list wording", async () => {
+    const { isEmptyState } = await import("../../src/linkedin/loaded.js");
+    expect(isEmptyState("No results found\nTry shortening or rephrasing your search.")).toBe(true);
+    expect(isEmptyState("You're all caught up")).toBe(true);
+    expect(isEmptyState("Jane Doe\nFounder at Northwind\n2nd")).toBe(false);
+  });
+});
