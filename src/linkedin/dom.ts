@@ -1,4 +1,5 @@
 import type { Locator, Page } from "patchright";
+import { currentDeadline } from "../browser/deadline.js";
 import { selectorBroken } from "../errors.js";
 import type { PageSignals } from "../safety/guard.js";
 import type { Candidate, ExtractSpec, SelectorEntry } from "./selectors.js";
@@ -18,17 +19,32 @@ function locatorFor(scope: Scope, c: Candidate): Locator {
 }
 
 /**
+ * A wait's timeout, capped to what is left of the current call's budget.
+ * Never 0, which Playwright reads as "no timeout".
+ */
+function budgeted(timeout: number): number {
+  const deadline = currentDeadline();
+  return deadline ? Math.max(1, deadline.clamp(timeout)) : timeout;
+}
+
+/**
  * Returns the first visible match from the entry's candidate list, polling
- * until `timeout`. Throws SELECTOR_BROKEN with the entry name if none appear.
+ * until `timeout`. Throws SELECTOR_BROKEN with the entry name if none appear,
+ * or TIMEOUT if the call's time budget ran out first (the element may well
+ * exist; we just stopped looking).
  */
 export async function find(scope: Scope, sel: SelectorEntry, opts: { timeout?: number } = {}): Promise<Locator> {
   const found = await findOptional(scope, sel, opts);
-  if (!found) throw selectorBroken(sel.name);
+  if (!found) {
+    currentDeadline()?.check(`looking for "${sel.name}"`);
+    throw selectorBroken(sel.name);
+  }
   return found;
 }
 
+/** Like `find`, but returns null when nothing appears. The wait is capped to the call's time budget. */
 export async function findOptional(scope: Scope, sel: SelectorEntry, opts: { timeout?: number } = {}): Promise<Locator | null> {
-  const deadline = Date.now() + (opts.timeout ?? 10_000);
+  const deadline = Date.now() + budgeted(opts.timeout ?? 10_000);
   for (;;) {
     for (const c of sel.candidates) {
       const loc = locatorFor(scope, c);
@@ -118,12 +134,17 @@ export async function extractSnapshots(page: Page, spec: ExtractSpec): Promise<S
   return page.evaluate(`(${EXTRACT_SCRIPT})(${JSON.stringify(spec)})`) as Promise<Snapshot[]>;
 }
 
-/** Waits until at least one container from the spec is present. Returns false on timeout. */
+/**
+ * Waits until at least one container from the spec is present. Returns false
+ * on timeout, or throws TIMEOUT if the call's time budget ran out first, so an
+ * unfinished wait isn't mistaken for an empty list or a changed layout.
+ */
 export async function waitForAny(page: Page, css: readonly string[], timeout = 15_000): Promise<boolean> {
   try {
-    await page.waitForSelector(css.join(", "), { state: "attached", timeout });
+    await page.waitForSelector(css.join(", "), { state: "attached", timeout: budgeted(timeout) });
     return true;
   } catch {
+    currentDeadline()?.check("page_wait");
     return false;
   }
 }

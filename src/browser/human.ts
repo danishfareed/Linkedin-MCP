@@ -1,4 +1,5 @@
 import type { Page } from "patchright";
+import { type Deadline, deadlineExceeded } from "./deadline.js";
 
 /**
  * Pacing primitives. This is about volume and rhythm (one person, one action
@@ -63,8 +64,37 @@ export function keystrokeDelays(text: string, rng: Rng): number[] {
   return delays;
 }
 
+/** Rough cost of one keyboard call on top of its planned delay. */
+const KEY_OVERHEAD_MS = 12;
+
+/**
+ * Time kept free after typing for the rest of an action (finding and clicking
+ * the button, checking the result) when deciding how to enter text.
+ */
+export const TYPING_RESERVE_MS = 15_000;
+
+/** Estimated time to type text key by key with the given per-key delays. */
+export function estimateKeyTypingMs(delays: readonly number[]): number {
+  return delays.reduce((sum, d) => sum + d, 0) + delays.length * KEY_OVERHEAD_MS;
+}
+
+/**
+ * Key by key only for text up to PER_CHAR_TYPING_MAX characters whose
+ * estimated typing time still leaves TYPING_RESERVE_MS of the call's budget.
+ * Otherwise the text is inserted paragraph by paragraph.
+ */
+export function shouldTypeKeyByKey(charCount: number, estimateMs: number, remainingMs: number): boolean {
+  if (charCount > PER_CHAR_TYPING_MAX) return false;
+  return estimateMs + TYPING_RESERVE_MS <= remainingMs;
+}
+
+/**
+ * One Pacer per process keeps the rhythm between actions. Each tool call gets
+ * a view bound to its Deadline (`withDeadline`) that shares that rhythm.
+ */
 export class Pacer {
-  private lastActionAt = 0;
+  private state = { lastActionAt: 0 };
+  private deadline: Deadline | null = null;
 
   constructor(
     private readonly sleep: Sleep = realSleep,
@@ -72,36 +102,70 @@ export class Pacer {
     private readonly now: () => number = Date.now,
   ) {}
 
-  /** Wait so consecutive actions are spaced by a log-normal gap. The first action is not delayed. */
+  /** A view of this pacer whose waits respect `deadline`. It shares the action rhythm. */
+  withDeadline(deadline: Deadline): Pacer {
+    const view = new Pacer(this.sleep, this.rng, this.now);
+    view.state = this.state;
+    view.deadline = deadline;
+    return view;
+  }
+
+  private remainingMs(): number {
+    return this.deadline ? this.deadline.remainingMs() : Number.POSITIVE_INFINITY;
+  }
+
+  private async sleepWithinBudget(ms: number): Promise<void> {
+    await this.sleep(this.deadline ? this.deadline.clamp(ms) : ms);
+  }
+
+  /**
+   * Wait so consecutive actions are spaced by a log-normal gap. The first
+   * action is not delayed. The gap is never shortened: if it doesn't fit in
+   * the call's budget, this throws TIMEOUT instead of waiting.
+   */
   async betweenActions(): Promise<number> {
-    if (this.lastActionAt === 0) {
-      this.lastActionAt = this.now();
+    this.deadline?.check("pacing");
+    if (this.state.lastActionAt === 0) {
+      this.state.lastActionAt = this.now();
       return 0;
     }
     const gap = logNormalDelay(this.rng);
-    const elapsed = this.now() - this.lastActionAt;
+    const elapsed = this.now() - this.state.lastActionAt;
     const wait = Math.max(0, gap - elapsed);
+    if (this.deadline && wait >= this.deadline.remainingMs()) throw deadlineExceeded("pacing", this.deadline.budgetMs);
     if (wait > 0) await this.sleep(wait);
-    this.lastActionAt = this.now();
+    this.state.lastActionAt = this.now();
     return wait;
   }
 
   async afterNavigation(): Promise<number> {
+    this.deadline?.check("navigation");
     const ms = Math.round(uniform(this.rng, NAV_PAUSE.minMs, NAV_PAUSE.maxMs));
-    await this.sleep(ms);
+    await this.sleepWithinBudget(ms);
     return ms;
   }
 
-  /** A short beat between UI steps inside one action (open menu, then click item). */
+  /**
+   * A short beat between UI steps inside one action (open menu, then click
+   * item). It never throws: beats also follow the click that sends something,
+   * and a TIMEOUT there would report a sent action as failed. Once the budget
+   * is used up it just stops waiting.
+   */
   async beat(minMs = 400, maxMs = 1200): Promise<void> {
-    await this.sleep(Math.round(uniform(this.rng, minMs, maxMs)));
+    await this.sleepWithinBudget(Math.round(uniform(this.rng, minMs, maxMs)));
   }
 
+  /**
+   * Types short text key by key at a human pace. Long text, or text that
+   * wouldn't finish comfortably within the call's budget, is inserted
+   * paragraph by paragraph, the way people paste a drafted post.
+   */
   async typeText(page: Page, text: string, opts: { newline?: "enter" | "shift-enter" } = {}): Promise<void> {
+    this.deadline?.check("typing");
     const newlineKey = opts.newline === "shift-enter" ? "Shift+Enter" : "Enter";
-    if ([...text].length <= PER_CHAR_TYPING_MAX) {
-      const chars = [...text];
-      const delays = keystrokeDelays(text, this.rng);
+    const chars = [...text];
+    const delays = chars.length <= PER_CHAR_TYPING_MAX ? keystrokeDelays(text, this.rng) : [];
+    if (shouldTypeKeyByKey(chars.length, estimateKeyTypingMs(delays), this.remainingMs())) {
       for (let i = 0; i < chars.length; i++) {
         const ch = chars[i]!;
         if (ch === "\n") await page.keyboard.press(newlineKey);
@@ -111,23 +175,26 @@ export class Pacer {
       return;
     }
     const lines = text.replace(/\r/g, "").split("\n");
+    // Spread the pauses so every line goes in before the budget runs out.
+    const pauseCap = this.deadline ? Math.max(30, Math.floor((this.remainingMs() - TYPING_RESERVE_MS) / lines.length)) : Number.POSITIVE_INFINITY;
     for (let i = 0; i < lines.length; i++) {
       if (lines[i]) await page.keyboard.insertText(lines[i]!);
       if (i < lines.length - 1) await page.keyboard.press(newlineKey);
-      await this.sleep(Math.round(uniform(this.rng, 150, 700)));
+      await this.sleep(Math.min(pauseCap, Math.round(uniform(this.rng, 150, 700))));
     }
   }
 
   /** Smooth scrolling in a few uneven steps, pausing to "read". */
   async scroll(page: Page, steps = 3): Promise<void> {
     for (let i = 0; i < steps; i++) {
+      this.deadline?.check("scroll");
       const total = Math.round(uniform(this.rng, 450, 900));
       const parts = 4 + Math.floor(this.rng() * 4);
       for (let p = 0; p < parts; p++) {
         await page.mouse.wheel(0, Math.round(total / parts));
-        await this.sleep(Math.round(uniform(this.rng, 30, 90)));
+        await this.sleepWithinBudget(Math.round(uniform(this.rng, 30, 90)));
       }
-      await this.sleep(Math.round(uniform(this.rng, 700, 1800)));
+      await this.sleepWithinBudget(Math.round(uniform(this.rng, 700, 1800)));
     }
   }
 }
