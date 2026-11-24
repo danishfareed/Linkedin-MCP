@@ -43,6 +43,8 @@ export const ideogram: ImageProvider = {
   envSets: [["IDEOGRAM_API_KEY"]],
   keysUrl: "https://ideogram.ai/platform",
   docsUrl: "https://developer.ideogram.ai/v2/ideogram-api/quickstart",
+  // Result links look like https://ideogram.ai/api/images/ephemeral/<id>.png (docs: Quickstart).
+  resultHosts: ["ideogram.ai"],
   summary: "The best of these at legible text inside images (posters, headlines, signage). Billed per image from your Ideogram API credit.",
   credentials: (env) => env.IDEOGRAM_API_KEY?.trim() || null,
   validModel: (model) => safeModelPath(model, { min: 1, max: 1 }),

@@ -3,9 +3,9 @@ import { LinkedInMcpError, toMcpError } from "../errors.js";
 import type { ImageProviderId } from "./constants.js";
 import { EXTENSION, POSTABLE, imageSize, sniffImage } from "./image-file.js";
 import { saveMedia, slugify } from "./media.js";
-import { type ProviderContext, downloadImage, sleep } from "./net.js";
+import { type ProviderContext, downloadImage, sleep, systemLookup } from "./net.js";
 import { type ImageSettings, chooseProvider } from "./providers/index.js";
-import type { Cost, FetchFn, GenerateRequest, ProviderImage } from "./types.js";
+import type { Cost, FetchFn, GenerateRequest, LookupFn, ProviderImage } from "./types.js";
 
 /**
  * Provider-agnostic generation: pick the provider and model, run it under a
@@ -21,9 +21,11 @@ export interface GenerateDeps {
   now: () => Date;
   random: () => number;
   sleep: (ms: number, signal?: AbortSignal) => Promise<void>;
+  /** DNS for download checks; the system resolver when absent. */
+  lookup?: LookupFn;
 }
 
-export const defaultGenerateDeps = (): GenerateDeps => ({ fetch: globalThis.fetch, env: process.env, now: () => new Date(), random: Math.random, sleep });
+export const defaultGenerateDeps = (): GenerateDeps => ({ fetch: globalThis.fetch, env: process.env, now: () => new Date(), random: Math.random, sleep, lookup: systemLookup });
 
 export interface GeneratedFile {
   path: string;
@@ -47,9 +49,9 @@ export interface GenerateOptions extends GenerateRequest {
   model?: string;
 }
 
-async function toBytes(img: ProviderImage, ctx: ProviderContext, deps: GenerateDeps, signal: AbortSignal): Promise<Buffer> {
+async function toBytes(img: ProviderImage, ctx: ProviderContext, allowHosts: readonly string[] | null, deps: GenerateDeps, signal: AbortSignal): Promise<Buffer> {
   if ("data" in img) return img.data;
-  return downloadImage(ctx, { fetch: deps.fetch, signal, sleep: deps.sleep, random: deps.random }, img.url);
+  return downloadImage(ctx, { fetch: deps.fetch, signal, sleep: deps.sleep, random: deps.random, lookup: deps.lookup }, img.url, { allowHosts });
 }
 
 export async function generateImages(opts: GenerateOptions, settings: ImageSettings, mediaDir: string, deps: GenerateDeps): Promise<GenerateResult> {
@@ -59,10 +61,10 @@ export async function generateImages(opts: GenerateOptions, settings: ImageSetti
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(new Error("generation deadline")), settings.timeoutSeconds * 1000);
   try {
-    const out = await provider.generate({ ...opts, model }, credentials, { fetch: deps.fetch, signal: controller.signal, sleep: deps.sleep, random: deps.random });
+    const out = await provider.generate({ ...opts, model }, credentials, { fetch: deps.fetch, signal: controller.signal, sleep: deps.sleep, random: deps.random, lookup: deps.lookup });
     const notes = [...out.notes];
     if (choice.chosenBy === "first_configured") notes.push(`Several providers are set up; used ${provider.label}. Set LINKEDIN_MCP_IMAGE_PROVIDER to choose one.`);
-    const buffers = await Promise.all(out.images.slice(0, opts.count).map((img) => toBytes(img, ctx, deps, controller.signal)));
+    const buffers = await Promise.all(out.images.slice(0, opts.count).map((img) => toBytes(img, ctx, provider.resultHosts, deps, controller.signal)));
     const now = deps.now();
     const slug = slugify(opts.prompt, 40);
     const images: GeneratedFile[] = [];

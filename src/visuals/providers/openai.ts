@@ -30,6 +30,8 @@ export const openai: ImageProvider = {
   envSets: [["OPENAI_API_KEY"]],
   keysUrl: "https://platform.openai.com/api-keys",
   docsUrl: "https://developers.openai.com/api/docs/guides/image-generation",
+  // GPT Image models return base64 only, so nothing is ever downloaded.
+  resultHosts: [],
   summary: "GPT Image models: strong prompt following and good text in images. Billed per token on your OpenAI account.",
   credentials: (env) => env.OPENAI_API_KEY?.trim() || null,
   validModel: (model) => /^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$/.test(model),

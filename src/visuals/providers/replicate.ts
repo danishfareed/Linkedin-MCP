@@ -1,6 +1,6 @@
 import { LinkedInMcpError } from "../../errors.js";
 import type { AspectRatio } from "../constants.js";
-import { type ProviderContext, backoff, blocked, callJson, composePrompt, encodePath, safeModelPath, sameHost, unexpected } from "../net.js";
+import { type ProviderContext, backoff, blocked, callJson, composePrompt, encodePath, generationFailed, safeModelPath, sameHost, unexpected } from "../net.js";
 import type { ImageProvider } from "../types.js";
 
 /**
@@ -43,6 +43,8 @@ export const replicate: ImageProvider = {
   envSets: [["REPLICATE_API_TOKEN"]],
   keysUrl: "https://replicate.com/account/api-tokens",
   docsUrl: "https://replicate.com/docs/topics/predictions/create-a-prediction",
+  // "Output files are served by replicate.delivery and its subdomains" (docs: Output files).
+  resultHosts: ["replicate.delivery"],
   summary: "Runs official and community models (FLUX by default). Billed by compute time or per output, depending on the model.",
   credentials: (env) => env.REPLICATE_API_TOKEN?.trim() || null,
   validModel: (model) => safeModelPath(model, { min: 2, max: 2 }),
@@ -76,10 +78,10 @@ export const replicate: ImageProvider = {
       }
     }
     if (p.status === "failed") {
-      if (/nsfw|safety/i.test(p.error ?? "")) throw blocked(ctx, p.error ?? undefined);
-      throw new LinkedInMcpError("NETWORK", `Replicate couldn't generate the image${p.error ? `: ${p.error}` : ""}.`, "Try again, or change the prompt or model.", { provider: "Replicate" });
+      if (/nsfw|safety/i.test(String(p.error ?? ""))) throw blocked(ctx, p.error);
+      throw generationFailed(ctx, p.error);
     }
-    if (p.status !== "succeeded") throw new LinkedInMcpError("NETWORK", `The Replicate prediction was ${p.status}.`, "Try again.", { provider: "Replicate" });
+    if (p.status !== "succeeded") throw new LinkedInMcpError("NETWORK", `The Replicate prediction was ${p.status === "aborted" ? "aborted" : "canceled"}.`, "Try again.", { provider: "Replicate" });
     const urls = outputUrls(p.output);
     if (!urls.length) throw unexpected(ctx, "no image URLs in the output");
     return { images: urls.slice(0, req.count).map((url) => ({ url })), notes };

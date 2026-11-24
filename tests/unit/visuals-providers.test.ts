@@ -9,6 +9,8 @@ import { imageSize, sniffImage } from "../../src/visuals/image-file.js";
 import { listMedia, slugify } from "../../src/visuals/media.js";
 import { chooseProvider, providerStatus } from "../../src/visuals/providers/index.js";
 import type { ImageSettings } from "../../src/visuals/providers/index.js";
+import { clean, isPrivateAddress, providerHttpError } from "../../src/visuals/net.js";
+import type { LookupFn } from "../../src/visuals/types.js";
 import { tempDir } from "./helpers.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -54,9 +56,14 @@ const image = (bytes: Buffer = PNG) => () => new Response(new Uint8Array(bytes),
 
 const settings = (over: Partial<ImageSettings> = {}): ImageSettings => ({ provider: undefined, model: undefined, models: {}, timeoutSeconds: 300, ...over });
 
-function setup(env: NodeJS.ProcessEnv, fetch: typeof globalThis.fetch) {
+/** DNS for tests: every name is public unless listed. */
+function fakeLookup(overrides: Record<string, string> = {}): LookupFn {
+  return async (host) => [{ address: overrides[host] ?? "93.184.216.34", family: (overrides[host] ?? "").includes(":") ? 6 : 4 }];
+}
+
+function setup(env: NodeJS.ProcessEnv, fetch: typeof globalThis.fetch, dns: Record<string, string> = {}) {
   const media = join(tempDir(), "media");
-  const deps: GenerateDeps = { fetch, env, now: () => new Date(2026, 10, 24, 15, 30, 5), random: () => 0, sleep: async () => undefined };
+  const deps: GenerateDeps = { fetch, env, now: () => new Date(2026, 10, 24, 15, 30, 5), random: () => 0, sleep: async () => undefined, lookup: fakeLookup(dns) };
   return { media, deps };
 }
 
@@ -462,5 +469,116 @@ describe("image and brand settings", () => {
     expect(() => loadConfig({ LINKEDIN_MCP_HOME: home, LINKEDIN_MCP_BRAND_FONT: "comic-sans" })).toThrow(/LINKEDIN_MCP_BRAND_FONT/);
     writeFileSync(join(home, "config.json"), JSON.stringify({ brand: { theme: "neon" } }));
     expect(() => loadConfig({ LINKEDIN_MCP_HOME: home })).toThrow(/invalid settings/);
+  });
+});
+
+describe("download safety (redirects and SSRF)", () => {
+  const env = { HF_API_KEY_ID: "id", HF_API_KEY_SECRET: "secret" };
+  const redirect = (location: string) => () => new Response(null, { status: 302, headers: { location } });
+  // Higgsfield's file host isn't documented, so its downloads rely on the public-address checks alone.
+  const higgsfieldRoutes = (...cdn: [RegExp, Handler | Handler[]][]): [RegExp, Handler | Handler[]][] => [
+    [/\/estimate\//, json(docs.higgsfield.estimate)],
+    [/soul\/standard$/, json(docs.higgsfield.queued)],
+    [/api\.higgsfield\.ai\/requests\/.+\/status$/, json(docs.higgsfield.completed)],
+    ...cdn,
+  ];
+
+  it("follows a redirect to another public host by hand, checking it first", async () => {
+    const { fetch, calls } = fakeFetch(higgsfieldRoutes([/cdn\.example\.com/, redirect("https://files.example.net/final.png")], [/files\.example\.net/, image()]));
+    const { media, deps } = setup(env, fetch);
+    await expect(generateImages(request, settings(), media, deps)).resolves.toMatchObject({ images: [expect.anything()] });
+    const downloads = calls.filter((c) => /example\.(com|net)/.test(c.url));
+    expect(downloads.map((c) => c.redirect)).toEqual(["manual", "manual"]);
+  });
+
+  it("refuses redirects to IP literals, plain http, local names and private addresses, without fetching them", async () => {
+    const cases: [string, Record<string, string>, RegExp][] = [
+      ["https://10.0.0.5/x.png", {}, /IP address/],
+      ["https://[::1]/x.png", {}, /IP address/],
+      ["http://files.example.net/x.png", {}, /not https/],
+      ["https://localhost/x.png", {}, /local or internal/],
+      ["https://metadata.google.internal/computeMetadata/v1/", {}, /local or internal/],
+      ["https://rebind.example.net/x.png", { "rebind.example.net": "169.254.169.254" }, /private or local address/],
+      ["https://v6.example.net/x.png", { "v6.example.net": "::ffff:192.168.1.10" }, /private or local address/],
+      ["https://files.example.net:8443/x.png", {}, /non-standard port/],
+    ];
+    for (const [target, dns, pattern] of cases) {
+      const { fetch, calls } = fakeFetch(higgsfieldRoutes([/cdn\.example\.com/, redirect(target)], [/./, image()]));
+      const { media, deps } = setup(env, fetch, dns);
+      const err = await rejection(generateImages(request, settings(), media, deps));
+      expect(err.message, target).toMatch(pattern);
+      expect(calls.some((c) => c.url.startsWith(target.split("/x.png")[0]!) && !c.url.includes("cdn.example.com")), target).toBe(false);
+    }
+  });
+
+  it("stops after three redirects", async () => {
+    const { fetch } = fakeFetch(higgsfieldRoutes([/cdn\.example\.com/, redirect("https://cdn.example.com/again.png")]));
+    const { media, deps } = setup(env, fetch);
+    expect((await rejection(generateImages(request, settings(), media, deps))).message).toMatch(/too many redirects/);
+  });
+
+  it("only downloads from each provider's own file hosts", async () => {
+    const elsewhere = { ...docs.replicate.succeeded, output: ["https://evil.example/out.png"] };
+    const { fetch, calls } = fakeFetch([[/predictions$/, json(elsewhere, 201)], [/evil\.example/, image()]]);
+    const { media, deps } = setup({ REPLICATE_API_TOKEN: "r8_token" }, fetch);
+    const err = await rejection(generateImages(request, settings({ provider: "replicate" }), media, deps));
+    expect(err.message).toMatch(/not one of Replicate's file hosts/);
+    expect(calls.some((c) => c.url.includes("evil.example"))).toBe(false);
+
+    // An allowed host that redirects off the list is refused at the second hop.
+    const hop = fakeFetch([[/predictions$/, json(docs.replicate.succeeded, 201)], [/replicate\.delivery/, redirect("https://evil.example/out.png")], [/evil\.example/, image()]]);
+    const b = setup({ REPLICATE_API_TOKEN: "r8_token" }, hop.fetch);
+    expect((await rejection(generateImages(request, settings({ provider: "replicate" }), b.media, b.deps))).message).toMatch(/not one of Replicate's file hosts/);
+    expect(hop.calls.some((c) => c.url.includes("evil.example"))).toBe(false);
+  });
+
+  it("classifies private, local and metadata addresses", () => {
+    for (const ip of ["127.0.0.1", "10.1.2.3", "172.16.0.1", "172.31.255.255", "192.168.0.1", "169.254.169.254", "100.64.0.1", "100.100.100.200", "0.0.0.0", "168.63.129.16", "::", "::1", "fc00::1", "fd00:ec2::254", "fe80::1", "::ffff:127.0.0.1", "::ffff:7f00:1", "64:ff9b::a00:1", "not-an-ip"]) {
+      expect(isPrivateAddress(ip), ip).toBe(true);
+    }
+    for (const ip of ["93.184.216.34", "172.32.0.1", "100.128.0.1", "8.8.8.8", "2606:4700:4700::1111", "::ffff:8.8.8.8"]) {
+      expect(isPrivateAddress(ip), ip).toBe(false);
+    }
+  });
+});
+
+describe("secrets in provider messages", () => {
+  const key = "sk-test-abcdef123456";
+  const ctx = { label: "OpenAI", envHint: "OPENAI_API_KEY", billingUrl: "https://example.com", secrets: [key] };
+
+  it("redacts keys a provider echoes, even JSON-escaped or cut off at the length limit", () => {
+    const escaped = JSON.stringify({ error: { message: "Bad key sk-test-\\u0061bcdef123456 was sent" } }).replace("\\\\u0061", "\\u0061");
+    expect(escaped).toContain("\\u0061");
+    expect(providerHttpError(ctx, 401, escaped, null).message).not.toContain("abcdef123456");
+
+    const long = providerHttpError(ctx, 400, JSON.stringify({ error: { message: `${"x".repeat(285)} ${key} tail` } }), null).message;
+    expect(long).not.toMatch(/sk-te/);
+
+    expect(clean("Invalid key sk-test-ab", [key])).toBe("Invalid key [redacted]");
+    expect(clean(`${"y".repeat(190)}${key}`, [key], 200)).not.toMatch(/sk-t/);
+    expect(clean("line\u0000break\nand  spaces", [])).toBe("line break and spaces");
+  });
+
+  it("cleans provider-supplied failure text before it reaches an error", async () => {
+    const leaky = `the token r8_token_value was invalid ${"z".repeat(400)}`;
+    const rep = fakeFetch([[/predictions$/, json({ ...docs.replicate.succeeded, status: "failed", output: null, error: leaky }, 201)]]);
+    const a = setup({ REPLICATE_API_TOKEN: "r8_token_value" }, rep.fetch);
+    const repErr = await rejection(generateImages(request, settings({ provider: "replicate" }), a.media, a.deps));
+    expect(repErr.message).not.toContain("r8_token_value");
+    expect(repErr.message.length).toBeLessThan(300);
+
+    const hf = fakeFetch([[/\/estimate\//, json(docs.higgsfield.estimate)], [/soul\/standard$/, json(docs.higgsfield.queued)], [/status$/, json({ ...docs.higgsfield.failed, error: "auth secret-456 failed" })]]);
+    const b = setup({ HF_API_KEY_ID: "key-id-123", HF_API_KEY_SECRET: "secret-456" }, hf.fetch);
+    expect((await rejection(generateImages(request, settings(), b.media, b.deps))).message).not.toContain("secret-456");
+
+    const falErr = fakeFetch([[/pricing\/estimate$/, json(docs.fal.estimate)], [/fal-ai\/flux\/dev$/, json(docs.fal.submitted)], [/status$/, json({ ...docs.fal.completed, error: `key fal-secret-key ${"q".repeat(500)}`, error_type: "runner_error" })]]);
+    const c = setup({ FAL_KEY: "fal-secret-key" }, falErr.fetch);
+    const fErr = await rejection(generateImages(request, settings(), c.media, c.deps));
+    expect(fErr.message).not.toContain("fal-secret-key");
+    expect(fErr.message.length).toBeLessThan(300);
+
+    const gem = fakeFetch([[/generateContent$/, json({ candidates: [{ content: { parts: [{ text: "I can't use key AIza-secret-key for that" }] } }] })]]);
+    const d = setup({ GEMINI_API_KEY: "AIza-secret-key" }, gem.fetch);
+    expect((await rejection(generateImages(request, settings(), d.media, d.deps))).message).not.toContain("AIza-secret-key");
   });
 });

@@ -2,6 +2,9 @@ import type { AspectRatio, ImageProviderId } from "./constants.js";
 
 export type FetchFn = typeof fetch;
 
+/** DNS lookup returning every address for a host (dns.promises.lookup with all: true). */
+export type LookupFn = (hostname: string) => Promise<{ address: string; family: number }[]>;
+
 /** What the assistant asks for, provider-agnostic. */
 export interface GenerateRequest {
   prompt: string;
@@ -42,6 +45,8 @@ export interface ProviderDeps {
   sleep: (ms: number, signal?: AbortSignal) => Promise<void>;
   /** For polling jitter and idempotency keys. */
   random: () => number;
+  /** DNS for download checks; the system resolver when absent. */
+  lookup?: LookupFn;
 }
 
 export interface ProviderInfo {
@@ -52,6 +57,13 @@ export interface ProviderInfo {
   envSets: string[][];
   keysUrl: string;
   docsUrl: string;
+  /**
+   * Hosts (and their subdomains) that result images may be downloaded from.
+   * [] means this provider returns image bytes and nothing is ever
+   * downloaded; null means any public https host, for providers whose file
+   * host isn't documented.
+   */
+  resultHosts: readonly string[] | null;
   /** One line on what it is good at and how it bills. */
   summary: string;
 }

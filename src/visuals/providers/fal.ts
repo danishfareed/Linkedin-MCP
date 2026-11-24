@@ -1,6 +1,6 @@
 import { LinkedInMcpError } from "../../errors.js";
 import type { AspectRatio } from "../constants.js";
-import { type ProviderContext, backoff, blocked, callJson, composePrompt, encodePath, safeModelPath, sameHost, unexpected } from "../net.js";
+import { type ProviderContext, backoff, blocked, callJson, clean, composePrompt, encodePath, generationFailed, safeModelPath, sameHost, unexpected } from "../net.js";
 import type { Cost, ImageProvider, ProviderDeps, ProviderRequest } from "../types.js";
 
 /**
@@ -93,9 +93,7 @@ async function run(req: ProviderRequest, key: string, deps: ProviderDeps): Promi
       throw err;
     }
   }
-  if (state.error) {
-    throw new LinkedInMcpError("NETWORK", `fal.ai couldn't generate the image: ${state.error}`, "Try again, or change the prompt or model.", { provider: "fal.ai", error_type: state.error_type });
-  }
+  if (state.error) throw generationFailed(ctx, state.error, state.error_type ? { error_type: clean(state.error_type, ctx.secrets, 60) } : undefined);
   // The result returns the model's own status and body; a failed run comes back as its error.
   return (await callJson(ctx, deps, responseUrl, { headers: headers(key), timeoutMs: 60_000 })).json as ModelOutput;
 }
@@ -107,6 +105,8 @@ export const fal: ImageProvider = {
   envSets: [["FAL_KEY"]],
   keysUrl: "https://fal.ai/dashboard/keys",
   docsUrl: "https://fal.ai/docs/api-reference/inference-api/index",
+  // fal's CDN (docs: Reliability, "v3.fal.media").
+  resultHosts: ["fal.media"],
   summary: "FLUX and hundreds of other hosted models through one queue API. Billed per output (FLUX.1 [dev] is per megapixel) on your fal account.",
   credentials: (env) => env.FAL_KEY?.trim() || null,
   validModel: (model) => safeModelPath(model, { min: 2, max: 4 }),

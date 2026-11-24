@@ -1,6 +1,6 @@
 import { LinkedInMcpError } from "../../errors.js";
 import type { AspectRatio } from "../constants.js";
-import { type ProviderContext, blocked, callJson, composePrompt, encodePath, providerHttpError, safeModelPath, unexpected } from "../net.js";
+import { type ProviderContext, blocked, callJson, clean, composePrompt, encodePath, providerHttpError, safeModelPath, unexpected } from "../net.js";
 import type { ImageProvider, ProviderDeps, ProviderRequest } from "../types.js";
 
 /**
@@ -56,7 +56,7 @@ async function one(req: ProviderRequest, key: string, deps: ProviderDeps): Promi
   if (reason) throw blocked(ctx, reason);
   const text = parts.map((p) => p.text ?? "").join(" ").trim();
   if (text) {
-    throw new LinkedInMcpError("INVALID_INPUT", `Gemini answered with text instead of an image: ${text.slice(0, 200)}`, "Rephrase the prompt as a description of the picture you want.", { provider: "Gemini" });
+    throw new LinkedInMcpError("INVALID_INPUT", `Gemini answered with text instead of an image: ${clean(text, ctx.secrets, 200)}`, "Rephrase the prompt as a description of the picture you want.", { provider: "Gemini" });
   }
   throw unexpected(ctx, "no image in the response");
 }
@@ -68,6 +68,8 @@ export const gemini: ImageProvider = {
   envSets: [["GEMINI_API_KEY"], ["GOOGLE_API_KEY"]],
   keysUrl: "https://aistudio.google.com/apikey",
   docsUrl: "https://ai.google.dev/gemini-api/docs/image-generation",
+  // Images arrive inline as base64, so nothing is ever downloaded.
+  resultHosts: [],
   summary: "Nano Banana image models: fast, good with text and edits. Billed per image on your Gemini API account; images carry a SynthID watermark.",
   // The Gemini docs: when both are set, GOOGLE_API_KEY takes precedence.
   credentials: (env) => env.GOOGLE_API_KEY?.trim() || env.GEMINI_API_KEY?.trim() || null,

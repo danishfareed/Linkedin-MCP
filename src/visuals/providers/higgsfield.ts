@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { LinkedInMcpError } from "../../errors.js";
 import type { AspectRatio } from "../constants.js";
-import { type ProviderContext, backoff, blocked, callJson, composePrompt, encodePath, safeModelPath, sameHost, unexpected } from "../net.js";
+import { type ProviderContext, backoff, blocked, callJson, composePrompt, encodePath, generationFailed, safeModelPath, sameHost, unexpected } from "../net.js";
 import type { Cost, ImageProvider, ProviderDeps, ProviderRequest } from "../types.js";
 
 /**
@@ -77,7 +77,8 @@ async function submitAndWait(req: ProviderRequest, batch: number, credentials: s
       case "nsfw":
         throw blocked(ctx, "input or output rejected by content moderation");
       case "failed":
-        throw new LinkedInMcpError("NETWORK", `Higgsfield couldn't generate the image${state.error ? `: ${state.error}` : ""}.`, "Try again, perhaps with a different prompt. Failed requests aren't charged.", { provider: "Higgsfield", request_id: id });
+        // Failed requests aren't charged (docs: Errors and retries).
+        throw generationFailed(ctx, state.error, { request_id: id });
       case "canceled":
         throw new LinkedInMcpError("NETWORK", "The Higgsfield request was canceled before it started.", "Try again.", { provider: "Higgsfield", request_id: id });
       case "queued":
@@ -119,6 +120,8 @@ export const higgsfield: ImageProvider = {
   envSets: [["HF_API_KEY_ID", "HF_API_KEY_SECRET"], ["HIGGSFIELD_API_KEY_ID", "HIGGSFIELD_API_KEY_SECRET"], ["HF_CREDENTIALS"]],
   keysUrl: "https://console.higgsfield.ai",
   docsUrl: "https://docs.higgsfield.ai/docs/quickstart.md",
+  // The docs only show placeholder CDN URLs, so any public https host is allowed (still SSRF-checked).
+  resultHosts: null,
   summary: "SOUL photo and fashion-editorial models, plus partner models. Pay-as-you-go from your Higgsfield balance; failed and moderated requests aren't charged.",
   credentials(env) {
     const id = env.HF_API_KEY_ID?.trim() || env.HIGGSFIELD_API_KEY_ID?.trim();
