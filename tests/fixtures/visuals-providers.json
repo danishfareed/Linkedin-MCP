@@ -1,0 +1,126 @@
+{
+  "_comment": "Response shapes copied from each provider's official docs (November 2026). Image URLs are placeholders the tests serve themselves.",
+  "higgsfield": {
+    "_source": "https://docs.higgsfield.ai/docs/quickstart.md, concepts/requests.md, concepts/billing-and-retention.md, concepts/errors.md, concepts/rate-limits.md",
+    "queued": {
+      "status": "queued",
+      "request_id": "d7e6c0f3-6699-4f6c-bb45-2ad7fd9158ff",
+      "status_url": "https://api.higgsfield.ai/requests/d7e6c0f3-6699-4f6c-bb45-2ad7fd9158ff/status",
+      "cancel_url": "https://api.higgsfield.ai/requests/d7e6c0f3-6699-4f6c-bb45-2ad7fd9158ff/cancel",
+      "expires_after": 604800
+    },
+    "in_progress": { "status": "in_progress", "request_id": "d7e6c0f3-6699-4f6c-bb45-2ad7fd9158ff" },
+    "completed": {
+      "status": "completed",
+      "request_id": "d7e6c0f3-6699-4f6c-bb45-2ad7fd9158ff",
+      "expires_at": "2026-10-31T12:05:12.481Z",
+      "images": [{ "url": "https://cdn.example.com/image-1.png" }]
+    },
+    "nsfw": { "status": "nsfw", "request_id": "d7e6c0f3-6699-4f6c-bb45-2ad7fd9158ff" },
+    "failed": { "status": "failed", "request_id": "d7e6c0f3-6699-4f6c-bb45-2ad7fd9158ff", "error": "Generation failed" },
+    "estimate": { "usd": "0.094" },
+    "unauthorized": { "detail": "Invalid credentials" },
+    "queue_full": {
+      "detail": { "code": "account_queue_full", "message": "Too many queued generations for this account", "retryable": true, "limit": 40, "retry_after_seconds": 30 }
+    }
+  },
+  "openai": {
+    "_source": "https://developers.openai.com/api/reference/resources/images/methods/generate.md, guides/image-generation (Limitations)",
+    "ok": {
+      "created": 1713833628,
+      "data": [{ "b64_json": "__PNG_BASE64__" }],
+      "usage": { "total_tokens": 100, "input_tokens": 50, "output_tokens": 50, "input_tokens_details": { "text_tokens": 10, "image_tokens": 40 } }
+    },
+    "moderation_blocked": {
+      "error": { "type": "image_generation_user_error", "code": "moderation_blocked", "message": "Your request was rejected by the safety system.", "moderation_details": { "moderation_stage": "input", "categories": ["harassment"] } }
+    }
+  },
+  "gemini": {
+    "_source": "https://ai.google.dev/gemini-api/docs/image-generation (generateContent REST), GenerateContentResponse",
+    "ok": {
+      "candidates": [
+        { "content": { "role": "model", "parts": [{ "inlineData": { "mimeType": "image/png", "data": "__PNG_BASE64__" } }] }, "finishReason": "STOP" }
+      ],
+      "usageMetadata": { "promptTokenCount": 12, "candidatesTokenCount": 1120, "totalTokenCount": 1132 }
+    },
+    "image_safety": { "candidates": [{ "content": { "parts": [] }, "finishReason": "IMAGE_SAFETY" }] },
+    "bad_key": {
+      "error": { "code": 400, "message": "API key not valid. Please pass a valid API key.", "status": "INVALID_ARGUMENT", "details": [{ "@type": "type.googleapis.com/google.rpc.ErrorInfo", "reason": "API_KEY_INVALID" }] }
+    }
+  },
+  "fal": {
+    "_source": "https://fal.ai/docs/api-reference/inference-api/queue/submit.md, queue/status.md, models/fal-ai/flux/dev/llms.txt, platform-apis/v1/models/pricing/estimate.md",
+    "submitted": {
+      "status": "IN_QUEUE",
+      "request_id": "019a1b2c-3d4e-7f80-9a1b-2c3d4e5f6a7b",
+      "response_url": "https://queue.fal.run/fal-ai/flux/requests/019a1b2c-3d4e-7f80-9a1b-2c3d4e5f6a7b",
+      "status_url": "https://queue.fal.run/fal-ai/flux/requests/019a1b2c-3d4e-7f80-9a1b-2c3d4e5f6a7b/status",
+      "cancel_url": "https://queue.fal.run/fal-ai/flux/requests/019a1b2c-3d4e-7f80-9a1b-2c3d4e5f6a7b/cancel",
+      "queue_position": 0,
+      "logs": null,
+      "metrics": {}
+    },
+    "in_progress": { "status": "IN_PROGRESS", "request_id": "019a1b2c-3d4e-7f80-9a1b-2c3d4e5f6a7b", "logs": null, "metrics": {} },
+    "completed": { "status": "COMPLETED", "request_id": "019a1b2c-3d4e-7f80-9a1b-2c3d4e5f6a7b", "logs": null, "metrics": { "inference_time": 2.1 } },
+    "result": {
+      "images": [{ "url": "https://v3.fal.media/files/out-1.png", "width": 1024, "height": 1280, "content_type": "image/png" }],
+      "timings": { "inference": 2.1 },
+      "seed": 42,
+      "has_nsfw_concepts": [false],
+      "prompt": "an alpine lake"
+    },
+    "estimate": { "estimate_type": "historical_api_price", "total_cost": 0.033, "currency": "USD" }
+  },
+  "replicate": {
+    "_source": "https://api.replicate.com/openapi.json (models.predictions.create, predictions.get), black-forest-labs/flux-schnell schema",
+    "starting": {
+      "id": "gm3qorzdhgbfurvjtvhg6dckhu",
+      "model": "black-forest-labs/flux-schnell",
+      "version": "hidden",
+      "input": { "prompt": "an alpine lake" },
+      "logs": "",
+      "output": null,
+      "data_removed": false,
+      "error": null,
+      "status": "starting",
+      "created_at": "2026-11-24T16:19:34.765994Z",
+      "urls": {
+        "web": "https://replicate.com/p/gm3qorzdhgbfurvjtvhg6dckhu",
+        "get": "https://api.replicate.com/v1/predictions/gm3qorzdhgbfurvjtvhg6dckhu",
+        "cancel": "https://api.replicate.com/v1/predictions/gm3qorzdhgbfurvjtvhg6dckhu/cancel"
+      }
+    },
+    "succeeded": {
+      "id": "gm3qorzdhgbfurvjtvhg6dckhu",
+      "model": "black-forest-labs/flux-schnell",
+      "version": "hidden",
+      "input": { "prompt": "an alpine lake" },
+      "logs": "",
+      "output": ["https://replicate.delivery/yhqm/hcDDSNf633zeDUz9sWkKfaftcfJLWIvuhn9vfCFWmufxelmemA/out-0.png"],
+      "data_removed": false,
+      "error": null,
+      "status": "succeeded",
+      "created_at": "2026-11-24T16:19:34.765994Z",
+      "metrics": { "predict_time": 0.8, "total_time": 1.2 },
+      "urls": {
+        "web": "https://replicate.com/p/gm3qorzdhgbfurvjtvhg6dckhu",
+        "get": "https://api.replicate.com/v1/predictions/gm3qorzdhgbfurvjtvhg6dckhu",
+        "cancel": "https://api.replicate.com/v1/predictions/gm3qorzdhgbfurvjtvhg6dckhu/cancel"
+      }
+    }
+  },
+  "ideogram": {
+    "_source": "https://developer.ideogram.ai/v2/ideogram-api/quickstart.md, price-quotes.md, errors.md, api-reference/images/generate/ideogram-4-6.md",
+    "ok": {
+      "generation_kind": "sampling",
+      "generation_id": "xtdZiqPwRxqY1Y7NExFmzB",
+      "seed": 12345,
+      "data": [
+        { "url": "https://ideogram.ai/api/images/ephemeral/xtdZiqPwRxqY1Y7NExFmzB.png", "prompt": "A letterpress poster", "resolution": "1024x1280", "seed": 12345, "is_image_safe": true },
+        { "url": "", "prompt": "A letterpress poster", "resolution": "1024x1280", "seed": 12346, "is_image_safe": false }
+      ]
+    },
+    "quote": { "object": "price_quote", "billing_identifier": "ideogram_4_6_generate", "quantity": 2, "usd_micros": 120000, "credit_millis": 12000, "qualifier": "exact" },
+    "insufficient_funds": { "error": "Your balance can't cover this request.", "reject_reason": "insufficient_funds" }
+  }
+}

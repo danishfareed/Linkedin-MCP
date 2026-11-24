@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { z } from "zod";
 import { invalidInput } from "./errors.js";
 import { updateJson } from "./state/store.js";
+import { FONT_KEYS, type FontKey, HEX_COLOR, IMAGE_PROVIDERS, type ImageProviderId, THEME_NAMES, type ThemeName } from "./visuals/constants.js";
 
 export interface Paths {
   home: string;
@@ -70,6 +71,36 @@ const limitOverrides = z
   })
   .partial();
 
+/** AI image generation. API keys are never read from config.json, only from the environment. */
+const imageSettings = z
+  .object({
+    provider: z.enum(IMAGE_PROVIDERS),
+    /** Model for the chosen provider (or for whichever provider is picked when none is chosen). */
+    model: z.string().min(1),
+    /** Model per provider, for users who switch between providers. */
+    models: z.partialRecord(z.enum(IMAGE_PROVIDERS), z.string().min(1)),
+    timeoutSeconds: z.number().int().min(30).max(900),
+  })
+  .partial();
+
+const hexColor = z.string().regex(HEX_COLOR, "Use a hex color like #1D3FD8");
+
+/** Defaults for quote cards and carousels. */
+const brandSettings = z
+  .object({
+    theme: z.enum(THEME_NAMES),
+    primaryColor: hexColor,
+    accentColor: hexColor,
+    font: z.enum(FONT_KEYS),
+    logoPath: z.string().min(1),
+    name: z.string().min(1).max(80),
+    handle: z.string().min(1).max(80),
+    headshotPath: z.string().min(1),
+    /** Load fonts from Google Fonts while rendering (default true). Off means system fonts only. */
+    webFonts: z.boolean(),
+  })
+  .partial();
+
 export const fileConfigSchema = z
   .object({
     headless: z.boolean(),
@@ -100,6 +131,8 @@ export const fileConfigSchema = z
       })
       .partial(),
     postVia: z.enum(POST_VIA),
+    images: imageSettings,
+    brand: brandSettings,
   })
   .partial();
 
@@ -129,6 +162,20 @@ export interface Config {
   /** Your own LinkedIn developer app, for posting through the official API. */
   api: { clientId: string | undefined; clientSecret: string | undefined; redirectPort: number; version: string | undefined };
   postVia: PostVia;
+  images: { provider: ImageProviderId | undefined; model: string | undefined; models: Partial<Record<ImageProviderId, string>>; timeoutSeconds: number };
+  brand: BrandSettings;
+}
+
+export interface BrandSettings {
+  theme?: ThemeName;
+  primaryColor?: string;
+  accentColor?: string;
+  font?: FontKey;
+  logoPath?: string;
+  name?: string;
+  handle?: string;
+  headshotPath?: string;
+  webFonts: boolean;
 }
 
 export const DEFAULT_WORKING_HOURS = { start: "08:00", end: "21:00" } as const;
@@ -226,7 +273,36 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       version: env.LINKEDIN_MCP_API_VERSION?.trim() || file.api?.version,
     },
     postVia: parsePostVia(env.LINKEDIN_MCP_POST_VIA) ?? file.postVia ?? "auto",
+    images: {
+      provider: parseEnum("LINKEDIN_MCP_IMAGE_PROVIDER", env.LINKEDIN_MCP_IMAGE_PROVIDER, IMAGE_PROVIDERS) ?? file.images?.provider,
+      model: env.LINKEDIN_MCP_IMAGE_MODEL?.trim() || file.images?.model,
+      models: file.images?.models ?? {},
+      timeoutSeconds: Math.min(900, Math.max(30, parseNumber(env.LINKEDIN_MCP_IMAGE_TIMEOUT_SECONDS) ?? file.images?.timeoutSeconds ?? 300)),
+    },
+    brand: {
+      ...file.brand,
+      theme: parseEnum("LINKEDIN_MCP_BRAND_THEME", env.LINKEDIN_MCP_BRAND_THEME, THEME_NAMES) ?? file.brand?.theme,
+      primaryColor: parseHex("LINKEDIN_MCP_BRAND_PRIMARY", env.LINKEDIN_MCP_BRAND_PRIMARY) ?? file.brand?.primaryColor,
+      accentColor: parseHex("LINKEDIN_MCP_BRAND_ACCENT", env.LINKEDIN_MCP_BRAND_ACCENT) ?? file.brand?.accentColor,
+      font: parseEnum("LINKEDIN_MCP_BRAND_FONT", env.LINKEDIN_MCP_BRAND_FONT, FONT_KEYS) ?? file.brand?.font,
+      logoPath: env.LINKEDIN_MCP_BRAND_LOGO?.trim() || file.brand?.logoPath,
+      webFonts: parseStrictBool("LINKEDIN_MCP_WEB_FONTS", env.LINKEDIN_MCP_WEB_FONTS) ?? file.brand?.webFonts ?? true,
+    },
   };
+}
+
+function parseEnum<T extends string>(name: string, value: string | undefined, allowed: readonly T[]): T | undefined {
+  const v = value?.trim().toLowerCase();
+  if (!v) return undefined;
+  if ((allowed as readonly string[]).includes(v)) return v as T;
+  throw invalidInput(`${name} must be one of ${allowed.join(", ")}, got "${value}"`);
+}
+
+function parseHex(name: string, value: string | undefined): string | undefined {
+  const v = value?.trim();
+  if (!v) return undefined;
+  if (HEX_COLOR.test(v)) return v;
+  throw invalidInput(`${name} must be a hex color like #1D3FD8, got "${value}"`);
 }
 
 function parsePostVia(value: string | undefined): PostVia | undefined {
