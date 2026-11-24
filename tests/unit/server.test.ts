@@ -26,6 +26,7 @@ function setup(opts: { env?: Record<string, string>; at?: Date } = {}) {
       return fn(fakeNav);
     },
     close: async () => undefined,
+    isOpen: () => false,
   } as unknown as BrowserSession;
   return { ctx, home, t, browserCalls };
 }

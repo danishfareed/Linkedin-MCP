@@ -117,6 +117,14 @@ function parseBool(value: string | undefined): boolean | undefined {
   return undefined;
 }
 
+/** Like parseBool, but a typo must not silently turn a safety switch off. */
+function parseStrictBool(name: string, value: string | undefined): boolean | undefined {
+  if (value === undefined || value.trim() === "") return undefined;
+  const parsed = parseBool(value);
+  if (parsed === undefined) throw invalidInput(`${name} must be true or false, got "${value}"`);
+  return parsed;
+}
+
 function parseNumber(value: string | undefined): number | undefined {
   if (value === undefined || value.trim() === "") return undefined;
   const n = Number(value);
@@ -174,8 +182,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     idleTimeoutMs: Math.max(1, idleMinutes) * 60_000,
     workingHours: envHours ? parseWorkingHours(envHours) : (file.workingHours ?? { ...DEFAULT_WORKING_HOURS }),
     confirmReactions: parseBool(env.LINKEDIN_MCP_CONFIRM_REACTIONS) ?? file.confirm?.reactions ?? true,
-    confirmInClient: parseBool(env.LINKEDIN_MCP_CONFIRM_IN_CLIENT) ?? file.confirm?.inClient ?? true,
-    readOnly: parseBool(env.LINKEDIN_MCP_READ_ONLY) ?? file.readOnly ?? false,
+    confirmInClient: parseStrictBool("LINKEDIN_MCP_CONFIRM_IN_CLIENT", env.LINKEDIN_MCP_CONFIRM_IN_CLIENT) ?? file.confirm?.inClient ?? true,
+    readOnly: parseStrictBool("LINKEDIN_MCP_READ_ONLY", env.LINKEDIN_MCP_READ_ONLY) ?? file.readOnly ?? false,
     toolTimeoutMs: Math.min(600, Math.max(20, parseNumber(env.LINKEDIN_MCP_TOOL_TIMEOUT_SECONDS) ?? file.toolTimeoutSeconds ?? 55)) * 1000,
     limits: file.limits ?? {},
     browser: {

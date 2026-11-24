@@ -1,3 +1,4 @@
+import { existsSync, readdirSync } from "node:fs";
 import { z } from "zod";
 import { hasSessionCookie } from "../browser/session.js";
 import { patchFileConfig } from "../config.js";
@@ -5,6 +6,7 @@ import { withBrowser } from "../context.js";
 import { LinkedInMcpError, toMcpError } from "../errors.js";
 import { readMyProfile } from "../linkedin/pages/profile.js";
 import { LIMIT_ACTIONS, LIMIT_TABLE, validateLimitChanges } from "../safety/limits.js";
+import { askUserToConfirm, clientCanConfirm } from "./confirm-in-client.js";
 import { LOCAL, READ, defineTool } from "./registry.js";
 import { executeWrite } from "./write.js";
 
@@ -12,19 +14,28 @@ const limitShape = Object.fromEntries(
   LIMIT_ACTIONS.map((a) => [a, z.number().int().min(0).max(LIMIT_TABLE[a].ceiling).optional().describe(`${LIMIT_TABLE[a].label} per day (default ${LIMIT_TABLE[a].default}, max ${LIMIT_TABLE[a].ceiling}).`)]),
 ) as Record<(typeof LIMIT_ACTIONS)[number], z.ZodOptional<z.ZodNumber>>;
 
+function profileSaved(dir: string): boolean {
+  try {
+    return existsSync(dir) && readdirSync(dir).length > 0;
+  } catch {
+    return false;
+  }
+}
+
 export const sessionTools = [
   defineTool({
     name: "session_status",
     title: "Check LinkedIn session status",
     description:
-      "Whether the automation browser is signed in to LinkedIn, whose account it is, whether automation is paused, and whether the 14-day warm-up is active. " +
-      "By default it only checks the saved session cookie (no page load). Set verify=true to load your profile and confirm (uses one page load).",
+      "Whose LinkedIn account linkedin-mcp is set up for, whether automation is paused, warm-up status, read-only and dry-run modes. " +
+      "By default it answers from saved state without opening the browser (and checks the session cookie if the browser is already open). " +
+      "Set verify=true to load your profile and confirm you're signed in (uses one page load).",
     input: { verify: z.boolean().default(false) },
     annotations: READ,
     handler: async (args, ctx) => {
       const breaker = await ctx.breaker.state();
       let loggedIn: boolean | null = null;
-      let checkedBy: "cookie" | "page" = "cookie";
+      let checkedBy: "saved_state" | "cookie" | "page" = "saved_state";
       let problem: { code: string; message: string; next_step: string } | null = null;
       try {
         if (args.verify) {
@@ -32,8 +43,9 @@ export const sessionTools = [
           await ctx.account.update({ name: me.name, profile_url: me.profile_url, public_id: me.public_id, last_verified_at: ctx.clock().toISOString() });
           loggedIn = true;
           checkedBy = "page";
-        } else {
+        } else if (ctx.session.isOpen()) {
           loggedIn = await ctx.session.run((nav) => hasSessionCookie(nav.page.context()), { quiet: true });
+          checkedBy = "cookie";
         }
       } catch (err) {
         const e = toMcpError(err);
@@ -43,16 +55,22 @@ export const sessionTools = [
       if (loggedIn) await ctx.limits.startWarmupIfNeeded();
       const account = await ctx.account.get();
       const limits = await ctx.limits.status();
+      const neverSignedIn = !account.first_login_at && !profileSaved(ctx.config.paths.profile);
       return {
         logged_in: loggedIn,
         checked_by: checkedBy,
         account: { name: account.name, profile_url: account.profile_url, last_verified_at: account.last_verified_at },
         paused: breaker.open ? { reason: breaker.reason, since: breaker.tripped_at, until: breaker.until, note: breaker.note } : null,
         warmup: limits.warmup,
+        read_only: ctx.config.readOnly,
         dry_run: ctx.config.dryRun,
         working_hours: ctx.config.workingHours,
         ...(problem ? { problem } : {}),
-        ...(loggedIn === false ? { next_step: "Run `npx @danishfareed/linkedin-mcp login` in a terminal and sign in." } : {}),
+        ...(loggedIn === false || neverSignedIn
+          ? { next_step: "Run `npx @danishfareed/linkedin-mcp login` in a terminal and sign in." }
+          : loggedIn === null
+            ? { note: "Checked from saved state without opening the browser. Call again with verify=true to confirm the session on LinkedIn." }
+            : {}),
       };
     },
   }),
@@ -130,12 +148,16 @@ export const sessionTools = [
     title: "Confirm a previewed action",
     description:
       "Execute an action previewed by another tool (post, schedule, comment, reply, reaction, connection request, invitation response, message, deletion). " +
-      "Only call this after the user has seen the preview and clearly said yes. Tokens are single-use and expire after 10 minutes.",
+      "Only call this after the user has seen the preview and clearly said yes. Tokens are single-use and expire after 10 minutes. " +
+      "If the AI client supports it, the user is also asked to approve in a dialog, and declining there sends nothing.",
     input: { confirmation_token: z.string().min(10) },
     annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
-    handler: async (args, ctx) => {
+    handler: async (args, ctx, call) => {
       const action = ctx.confirm.redeem(args.confirmation_token);
-      return executeWrite(ctx, action.kind, action.params, action.preview);
+      const askedInClient = ctx.config.confirmInClient && clientCanConfirm(call.server);
+      if (askedInClient) await askUserToConfirm(call.server!, action.kind, action.preview);
+      const outcome = await executeWrite(ctx, action.kind, action.params, action.preview);
+      return askedInClient ? { ...outcome, approved_in_client: true } : outcome;
     },
   }),
 
