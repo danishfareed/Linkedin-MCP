@@ -3,7 +3,13 @@ import { promises as fs } from "node:fs";
 import { appendJsonLine } from "../state/store.js";
 import { type Clock, systemClock } from "../util/time.js";
 
-export type AuditResult = "success" | "failed" | "dry_run" | "guard_tripped" | "paused" | "resumed";
+/**
+ * - success: the write was verified on the page.
+ * - unconfirmed: the final click happened but the result couldn't be verified.
+ * - not_sent: stopped before the final click (already pending, upsell…).
+ * - failed: an error before the final click; nothing was sent.
+ */
+export type AuditResult = "success" | "unconfirmed" | "not_sent" | "failed" | "dry_run" | "guard_tripped" | "paused" | "resumed";
 
 export interface AuditRecord {
   time: string;
@@ -13,6 +19,8 @@ export interface AuditRecord {
   text_hash: string | null;
   result: AuditResult;
   error_code?: string;
+  /** For unconfirmed and not_sent: the short reason. */
+  reason?: string;
   detail?: string;
 }
 

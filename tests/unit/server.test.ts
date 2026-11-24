@@ -104,11 +104,11 @@ describe("MCP server", () => {
   it("executes a confirmed write, counts it and audits it", async () => {
     const { ctx, browserCalls } = setup();
     let ran = 0;
-    defineWrite<{ text: string }>({ kind: "test_write_ok", limit: "comment", target: () => "t", text: (p) => p.text, run: async () => ({ ran: ++ran }) });
+    defineWrite<{ text: string }>({ kind: "test_write_ok", limit: "comment", target: () => "t", text: (p) => p.text, run: async () => ({ outcome: "sent", retry_safe: false, data: { ran: ++ran } }) });
     const { call } = await connect(ctx);
     const ticket = ctx.confirm.create({ kind: "test_write_ok", params: { text: "hi" }, preview: {} });
     const r = await call("confirm_action", { confirmation_token: ticket.confirmation_token });
-    expect(r.body).toMatchObject({ status: "done", action: "test_write_ok", result: { ran: 1 } });
+    expect(r.body).toMatchObject({ status: "sent", retry_safe: false, action: "test_write_ok", result: { ran: 1 } });
     expect(browserCalls).toEqual(["run"]);
     const limits = await call("get_limits");
     expect(limits.body.actions.find((a: { action: string }) => a.action === "comment").used_today).toBe(1);
