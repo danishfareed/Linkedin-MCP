@@ -8,6 +8,11 @@ import { invalidInput } from "../errors.js";
  * Upload validation. A file only reaches LinkedIn if it is a real image or
  * document by both extension and content, within size limits, outside
  * sensitive folders, and unchanged since the user saw the preview.
+ *
+ * The linkedin-mcp data folder is protected (browser profile, state, config),
+ * with one narrow exception: the media folder, where generated images and
+ * carousels are saved. The exception is decided on resolved paths, so a
+ * symlink in media that points at the profile is still refused.
  */
 
 export type UploadKind = "image" | "document";
@@ -53,14 +58,46 @@ function isOle(b: Buffer): boolean {
   return b.subarray(0, 8).equals(Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]));
 }
 
+/** Name of the media folder inside the data folder; matches Paths.mediaDir in config.ts. */
+export const MEDIA_DIR_NAME = "media";
+
 /** Folders whose contents must never be uploaded, whatever the extension. */
 export function deniedRoots(linkedinMcpHome: string): string[] {
   const home = homedir();
   return [linkedinMcpHome, ...[".ssh", ".aws", ".gnupg", ".config/gcloud", ".kube", ".docker", ".npmrc"].map((p) => join(home, p))];
 }
 
-function isInside(path: string, root: string): boolean {
+export function isInside(path: string, root: string): boolean {
   return path === root || path.startsWith(root.endsWith(sep) ? root : root + sep);
+}
+
+/**
+ * The real path of the media folder, but only when it really is
+ * `<data folder>/media`. If media is itself a symlink (to the profile, say),
+ * there is no exception and everything in the data folder stays refused.
+ */
+async function realMediaDir(linkedinMcpHome: string, mediaDir: string): Promise<string | null> {
+  try {
+    const [home, media] = await Promise.all([fs.realpath(linkedinMcpHome), fs.realpath(mediaDir)]);
+    return media === join(home, MEDIA_DIR_NAME) ? media : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Why a resolved path must not be uploaded, or null when it may be. Inside
+ * the data folder only files under the real media folder are allowed.
+ */
+export async function protectedReason(realPath: string, linkedinMcpHome: string, mediaDir = join(linkedinMcpHome, MEDIA_DIR_NAME)): Promise<string | null> {
+  const home = await fs.realpath(linkedinMcpHome).catch(() => linkedinMcpHome);
+  const others = await Promise.all(deniedRoots(linkedinMcpHome).slice(1).map((r) => fs.realpath(r).catch(() => r)));
+  if (others.some((root) => isInside(realPath, root))) return "protected folder";
+  if (isInside(realPath, home)) {
+    const media = await realMediaDir(linkedinMcpHome, mediaDir);
+    if (!media || realPath === media || !isInside(realPath, media)) return "protected folder";
+  }
+  return null;
 }
 
 async function sha256File(path: string): Promise<string> {
@@ -75,8 +112,7 @@ export async function validateUpload(input: string, kind: UploadKind, linkedinMc
   } catch {
     throw invalidInput(`File not found: ${input}`);
   }
-  const roots = await Promise.all(deniedRoots(linkedinMcpHome).map((r) => fs.realpath(r).catch(() => r)));
-  if (roots.some((root) => isInside(real, root))) {
+  if (await protectedReason(real, linkedinMcpHome)) {
     throw invalidInput(`Refusing to upload a file from a protected folder: ${input}`);
   }
   const stat = await fs.stat(real);

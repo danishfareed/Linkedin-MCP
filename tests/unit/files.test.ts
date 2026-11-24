@@ -70,6 +70,56 @@ describe("validateUpload", () => {
     await expect(validateUpload(link, "image", home)).rejects.toThrow(/protected folder/);
   });
 
+  it("allows generated media from the media folder", async () => {
+    const { home } = setup();
+    mkdirSync(join(home, "media", "2026-11"), { recursive: true });
+    const image = join(home, "media", "2026-11", "card.png");
+    writeFileSync(image, PNG);
+    await expect(validateUpload(image, "image", home)).resolves.toMatchObject({ name: "card.png" });
+    const deck = join(home, "media", "2026-11", "carousel.pdf");
+    writeFileSync(deck, PDF);
+    await expect(validateUpload(deck, "document", home)).resolves.toMatchObject({ name: "carousel.pdf" });
+  });
+
+  it("still refuses the profile, state and config next to the media folder", async () => {
+    const { home } = setup();
+    mkdirSync(join(home, "media"), { recursive: true });
+    mkdirSync(join(home, "state"), { recursive: true });
+    writeFileSync(join(home, "profile", "Cookies.png"), PNG);
+    writeFileSync(join(home, "state", "limits.png"), PNG);
+    writeFileSync(join(home, "config.json"), "{}");
+    writeFileSync(join(home, "media.png"), PNG);
+    await expect(validateUpload(join(home, "profile", "Cookies.png"), "image", home)).rejects.toThrow(/protected folder/);
+    await expect(validateUpload(join(home, "state", "limits.png"), "image", home)).rejects.toThrow(/protected folder/);
+    await expect(validateUpload(join(home, "config.json"), "document", home)).rejects.toThrow(/protected folder/);
+    // A sibling whose name only starts with "media" is not the media folder.
+    await expect(validateUpload(join(home, "media.png"), "image", home)).rejects.toThrow(/protected folder/);
+  });
+
+  it.skipIf(process.platform === "win32")("refuses a symlink in media that points at the profile", async () => {
+    const { home } = setup();
+    mkdirSync(join(home, "media", "2026-11"), { recursive: true });
+    const cookie = join(home, "profile", "Cookies.png");
+    writeFileSync(cookie, PNG);
+    const link = join(home, "media", "2026-11", "innocent.png");
+    symlinkSync(cookie, link);
+    await expect(validateUpload(link, "image", home)).rejects.toThrow(/protected folder/);
+  });
+
+  it.skipIf(process.platform === "win32")("refuses media folders that are symlinks into the rest of the data folder", async () => {
+    const { home } = setup();
+    mkdirSync(join(home, "state"), { recursive: true });
+    writeFileSync(join(home, "state", "secret.png"), PNG);
+    mkdirSync(join(home, "media"), { recursive: true });
+    symlinkSync(join(home, "state"), join(home, "media", "2026-11"));
+    await expect(validateUpload(join(home, "media", "2026-11", "secret.png"), "image", home)).rejects.toThrow(/protected folder/);
+
+    const other = setup();
+    writeFileSync(join(other.home, "profile", "Cookies.png"), PNG);
+    symlinkSync(join(other.home, "profile"), join(other.home, "media"));
+    await expect(validateUpload(join(other.home, "media", "Cookies.png"), "image", other.home)).rejects.toThrow(/protected folder/);
+  });
+
   it("detects a file swapped after the preview", async () => {
     const { dir, home } = setup();
     const file = join(dir, "photo.png");
