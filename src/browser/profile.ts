@@ -171,7 +171,7 @@ const execFileAsync = promisify(execFile);
 export async function executableVersion(executable: string, platform: NodeJS.Platform = process.platform): Promise<string | null> {
   try {
     if (platform === "darwin") {
-      const app = /^(.*?\.app)\//.exec(executable)?.[1];
+      const app = /^(.*?\.app)[\\/]/.exec(executable)?.[1];
       return app ? plistVersion(await fs.readFile(join(app, "Contents", "Info.plist"), "utf8")) : null;
     }
     if (platform === "win32") return newestVersionIn(await fs.readdir(dirname(executable)));
