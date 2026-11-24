@@ -20,7 +20,7 @@
   .station { position: relative; padding-top: 8px; }
   .glyph {
     width: 64px; height: 64px; border-radius: 16px; display: grid; place-items: center;
-    background: var(--sheet); box-shadow: var(--shadow); border: 1px solid var(--rule);
+    background: var(--sheet); border: 1.5px solid var(--rule);
     position: relative; z-index: 1;
   }
   .glyph svg { width: 32px; height: 32px; stroke: var(--ink); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -28,8 +28,8 @@
   .station.us .glyph svg { stroke: var(--on-blue); }
   .station.last { padding-left: 46px; }
   .station.cross .wire { right: -40px; }
-  .station h3 { margin-top: 18px; font-size: 23px; font-weight: 700; letter-spacing: -0.015em; }
-  .station h3.mono { font-family: var(--mono); font-size: 21px; font-weight: 600; letter-spacing: -0.02em; }
+  .station h3 { margin-top: 18px; font-size: 25px; font-weight: 700; letter-spacing: -0.015em; }
+  .station h3.mono { font-family: var(--mono); font-size: 23px; font-weight: 600; letter-spacing: -0.02em; }
   .station p { margin-top: 6px; font-size: 17px; line-height: 1.42; color: var(--muted); max-width: 250px; }
 
   /* Connector between stations: a line from glyph to glyph with a label above. */
@@ -46,8 +46,8 @@
 
   /* Bottom: the route every send takes. */
   .route { margin-top: 74px; }
-  .route h4 { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
-  .route h4 small { font-weight: 400; color: var(--muted); font-size: 17px; margin-left: 8px; }
+  .route h4 { font-size: 25px; font-weight: 700; letter-spacing: -0.02em; }
+  .route h4 small { display: block; margin-top: 4px; font-weight: 400; color: var(--muted); font-size: 17px; letter-spacing: 0; }
   .steps { margin-top: 26px; display: grid; grid-template-columns: repeat(6, 1fr); position: relative; }
   .steps::before { content: ""; position: absolute; left: 18px; right: 170px; top: 17px; border-top: 2px solid var(--rule); }
   .step { position: relative; padding-right: 18px; }
@@ -57,7 +57,7 @@
     font-weight: 700; font-size: 16px; position: relative; z-index: 1;
   }
   .step.you .num { background: var(--green); border-color: var(--green); color: var(--on-blue); }
-  .step h5 { margin-top: 16px; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+  .step h5 { margin-top: 16px; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
   .step p { margin-top: 6px; font-size: 15.5px; line-height: 1.42; color: var(--muted); }
   .step.you h5 { color: var(--green); }
 </style>
@@ -78,7 +78,7 @@
       <div class="glyph"><svg viewBox="0 0 24 24"><path d="M6 3.5h9l3.5 3.5v13.5H6z"/><path d="M9 10h6M9 13h6M9 16h3.5"/><path d="M15 3.5V7h3.5"/></svg></div>
       <div class="wire"><em>drives</em></div>
       <h3 class="mono">linkedin-mcp</h3>
-      <p>33 tools, with previews, caps and a guard on every action.</p>
+      <p>38 tools, with previews, caps and a guard on every action.</p>
     </div>
 
     <div class="station cross">
@@ -96,7 +96,7 @@
   </div>
 
   <div class="route">
-    <h4>Every post, comment, reaction, message or invitation<small>takes the same route</small></h4>
+    <h4>Every send takes the same route<small>Posts, comments, reactions, messages, invitations and deletions.</small></h4>
     <div class="steps">
       <div class="step"><div class="num">1</div><h5>Preview</h5><p>The assistant shows you exactly what will be sent, and where.</p></div>
       <div class="step you"><div class="num">2</div><h5>You approve</h5><p>A single-use token, bound to that exact preview.</p></div>
