@@ -1,9 +1,12 @@
 #!/usr/bin/env node
+import { spawn } from "node:child_process";
 import { rm } from "node:fs/promises";
 import { createInterface } from "node:readline/promises";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { ArgError, type CliArgs, HELP, parseArgs } from "./args.js";
 import { interactiveLogin } from "./browser/login.js";
+import { INSTALL_BROWSER_ARGS, patchrightCliPath, patchrightVersion } from "./browser/patchright.js";
+import { browserRecordFile } from "./browser/profile.js";
 import { hasSessionCookie } from "./browser/session.js";
 import { loadConfig } from "./config.js";
 import { type AppContext, VERSION, createContext } from "./context.js";
@@ -83,6 +86,7 @@ async function logout(ctx: AppContext, args: CliArgs): Promise<void> {
     }
   }
   await rm(ctx.config.paths.profile, { recursive: true, force: true });
+  await rm(browserRecordFile(ctx.config.paths), { force: true });
   await ctx.account.clear();
   console.log("Signed out: the browser profile was deleted. Limits history and the audit log were kept.");
 }
@@ -92,12 +96,36 @@ async function doctor(ctx: AppContext, args: CliArgs): Promise<void> {
   const icon = { ok: "✓", warn: "!", fail: "✗", skip: "-" } as const;
   const checks = await runDoctor(ctx, {
     live: !args.offline,
+    checkUpdates: !args.offline,
     onCheck: (c) => console.log(`${icon[c.level]} ${c.name}: ${c.detail}`),
   });
   await ctx.session.close();
   const failed = checks.filter((c) => c.level === "fail");
   console.log(failed.length ? `\n${failed.length} check(s) failed. See https://github.com/danishfareed/Linkedin-MCP#troubleshooting` : "\nAll checks passed.");
   process.exitCode = failed.length ? 1 : 0;
+}
+
+/**
+ * Runs the CLI of the patchright copy linkedin-mcp depends on. `npx patchright
+ * install` could fetch a different patchright release, which downloads a
+ * Chromium build ours can't use.
+ */
+async function installBrowser(): Promise<void> {
+  const cli = patchrightCliPath();
+  console.log(`Downloading Chromium for patchright ${patchrightVersion() ?? ""}, the version linkedin-mcp ${VERSION} uses.`);
+  const code = await new Promise<number>((resolve, reject) => {
+    const child = spawn(process.execPath, [cli, ...INSTALL_BROWSER_ARGS], { stdio: "inherit" });
+    child.on("error", reject);
+    child.on("exit", (exitCode, signal) => resolve(exitCode ?? (signal ? 1 : 0)));
+  });
+  if (code !== 0) {
+    throw new LinkedInMcpError(
+      "BROWSER_UNAVAILABLE",
+      `The Chromium download failed (exit code ${code}).`,
+      "Check your internet connection and try again, or install Google Chrome (https://www.google.com/chrome/) instead.",
+    );
+  }
+  console.log("Chromium is ready. linkedin-mcp uses it when Google Chrome isn't installed, or when LINKEDIN_MCP_BROWSER_CHANNEL=chromium.");
 }
 
 async function main(): Promise<void> {
@@ -113,6 +141,8 @@ async function main(): Promise<void> {
   }
   if (args.command === "help") return void console.log(HELP);
   if (args.command === "version") return void console.log(VERSION);
+  // Needs no config, so a broken config.json can't block it.
+  if (args.command === "install-browser") return installBrowser();
 
   const config = loadConfig();
   if (args.headed) config.headless = false;

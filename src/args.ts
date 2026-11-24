@@ -1,4 +1,4 @@
-export const COMMANDS = ["serve", "login", "logout", "status", "doctor", "resume", "help", "version"] as const;
+export const COMMANDS = ["serve", "login", "logout", "status", "doctor", "resume", "install-browser", "help", "version"] as const;
 export type Command = (typeof COMMANDS)[number];
 
 export interface CliArgs {
@@ -95,14 +95,16 @@ Usage
   npx @danishfareed/linkedin-mcp [command] [options]
 
 Commands
-  serve      Start the MCP server over stdio (default)
-  login      Open a browser window to sign in to LinkedIn (saved locally)
-  status     Show sign-in, pause and limit status
-  doctor     Check the browser, sign-in and LinkedIn page selectors (read-only)
-  resume     Clear a pause after you've resolved a LinkedIn check
-  logout     Delete the saved browser profile
-  help       Show this help
-  version    Print the version
+  serve            Start the MCP server over stdio (default)
+  login            Open a browser window to sign in to LinkedIn (saved locally)
+  status           Show sign-in, pause and limit status
+  doctor           Check the browser, sign-in, LinkedIn page selectors and updates (read-only)
+  resume           Clear a pause after you've resolved a LinkedIn check
+  logout           Delete the saved browser profile
+  install-browser  Download the Chromium build this version of linkedin-mcp uses
+                   (only needed without Google Chrome, or after an update asks for it)
+  help             Show this help
+  version          Print the version
 
 Options
   --http             Serve over local HTTP (127.0.0.1) instead of stdio
@@ -111,13 +113,14 @@ Options
   --dry-run          Simulate write actions without sending anything
   --verify           status: load your profile to confirm sign-in
   --keep-open        login: keep the window open until you close it
-  --offline          doctor: skip the live LinkedIn checks
+  --offline          doctor: skip the live LinkedIn checks and the update check
   --yes, -y          logout: skip the confirmation prompt
 
 Environment (overrides config.json in ~/.config/linkedin-mcp)
-  LINKEDIN_MCP_HOME, LINKEDIN_MCP_HEADLESS, LINKEDIN_MCP_DRY_RUN,
+  LINKEDIN_MCP_HOME, LINKEDIN_MCP_HEADLESS, LINKEDIN_MCP_DRY_RUN, LINKEDIN_MCP_READ_ONLY,
   LINKEDIN_MCP_WORKING_HOURS (e.g. 08:00-21:00 or off), LINKEDIN_MCP_IDLE_TIMEOUT_MINUTES,
-  LINKEDIN_MCP_CONFIRM_REACTIONS, LINKEDIN_MCP_BROWSER_CHANNEL, LINKEDIN_MCP_CHROME_PATH,
+  LINKEDIN_MCP_TOOL_TIMEOUT_SECONDS (default 55), LINKEDIN_MCP_CONFIRM_REACTIONS,
+  LINKEDIN_MCP_CONFIRM_IN_CLIENT, LINKEDIN_MCP_BROWSER_CHANNEL, LINKEDIN_MCP_CHROME_PATH,
   LINKEDIN_MCP_PORT, LINKEDIN_MCP_HTTP_TOKEN
 
 Docs: https://github.com/danishfareed/Linkedin-MCP#readme`;

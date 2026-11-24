@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ArgError, parseArgs } from "../../src/args.js";
+import { ArgError, HELP, parseArgs } from "../../src/args.js";
 
 describe("parseArgs", () => {
   it("defaults to serve over stdio", () => {
@@ -13,6 +13,8 @@ describe("parseArgs", () => {
     expect(parseArgs(["doctor", "--offline"])).toMatchObject({ command: "doctor", offline: true });
     expect(parseArgs(["--http", "--port", "4000"])).toMatchObject({ command: "serve", http: true, port: 4000 });
     expect(parseArgs(["serve", "--http", "--port=4001", "--headed", "--dry-run"])).toMatchObject({ http: true, port: 4001, headed: true, dryRun: true });
+    expect(parseArgs(["install-browser"]).command).toBe("install-browser");
+    expect(HELP).toMatch(/install-browser/);
     expect(parseArgs(["--help"]).command).toBe("help");
     expect(parseArgs(["-v"]).command).toBe("version");
   });
