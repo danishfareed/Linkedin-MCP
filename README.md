@@ -1,108 +1,51 @@
-# LinkedIn MCP Server: free, open-source LinkedIn automation for Claude, Cursor and any AI agent
+<p align="center">
+  <img src="docs/assets/hero.png" alt="linkedin-mcp: your AI drafts it, you approve it, then it posts. A schedule_post preview with an Approved stamp." width="100%">
+</p>
 
-[![npm](https://img.shields.io/npm/v/@danishfareed/linkedin-mcp)](https://www.npmjs.com/package/@danishfareed/linkedin-mcp)
-[![CI](https://github.com/danishfareed/Linkedin-MCP/actions/workflows/ci.yml/badge.svg)](https://github.com/danishfareed/Linkedin-MCP/actions/workflows/ci.yml)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+<h1 align="center">LinkedIn MCP Server</h1>
 
-**LinkedIn MCP** is a free, open-source [Model Context Protocol](https://modelcontextprotocol.io) server that lets your AI assistant run **your own** LinkedIn account. Ask Claude, Cursor, VS Code or any MCP client to draft and publish posts, **schedule LinkedIn posts** with LinkedIn's own scheduler, read your **LinkedIn analytics**, reply to comments, keep up with notifications and messages, and look up people and companies. It's LinkedIn automation built for creators, founders and job seekers, with safety rails on by default: nothing is sent until you approve a preview, daily caps keep activity at a human pace, and everything stops automatically if LinkedIn shows a security check.
+<p align="center"><b>Free, open-source LinkedIn automation for Claude, Cursor and any AI agent.</b><br>
+Post, schedule, read your analytics, reply to comments, search jobs and research people from your AI assistant, with your approval before anything is sent.</p>
 
-It runs on your computer through a real Chrome browser that you sign in to yourself. No API keys, no paid service, no password stored.
+<p align="center">
+  <a href="https://www.npmjs.com/package/@danishfareed/linkedin-mcp"><img alt="npm" src="https://img.shields.io/npm/v/@danishfareed/linkedin-mcp?color=1f6feb"></a>
+  <a href="https://github.com/danishfareed/Linkedin-MCP/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/danishfareed/Linkedin-MCP/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="Node 20+" src="https://img.shields.io/badge/node-20%2B-1f6feb">
+  <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-1f6feb"></a>
+</p>
 
-```bash
-npx @danishfareed/linkedin-mcp login
-```
+<p align="center">
+  <a href="#quick-start">Quick start</a> &nbsp;·&nbsp;
+  <a href="#what-you-can-ask">What you can ask</a> &nbsp;·&nbsp;
+  <a href="#tools">Tools</a> &nbsp;·&nbsp;
+  <a href="#safety">Safety</a> &nbsp;·&nbsp;
+  <a href="docs/clients.md">Client setup</a> &nbsp;·&nbsp;
+  <a href="#faq">FAQ</a>
+</p>
 
-That opens a browser window. Sign in to LinkedIn, then add the server to your AI client ([setup below](#setup)).
+**LinkedIn MCP** is a [Model Context Protocol](https://modelcontextprotocol.io) server that lets your AI assistant run **your own** LinkedIn account. Ask Claude, Cursor, VS Code or any MCP client to draft and publish posts, **schedule LinkedIn posts** with LinkedIn's own scheduler, read your **LinkedIn analytics**, answer comments, keep up with notifications and messages, search jobs, and look up people and companies. It's built for creators, founders and job seekers, and it runs on your computer through a real Chrome browser that you sign in to yourself. No API keys, no paid service, no password stored.
 
-> **Status: early release (0.1).** The safety layer is tested end to end. The parts that read and click LinkedIn's pages are new, and LinkedIn changes its layout often, so some tools will need fixes as more people use them. Run `npx @danishfareed/linkedin-mcp doctor` to check yours, and please [report anything broken](https://github.com/danishfareed/Linkedin-MCP/issues/new?template=broken-selector.yml).
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="Animated example: the user asks for a scheduled post, the assistant shows a preview, the user approves, and the post is scheduled on LinkedIn." width="100%">
+</p>
 
-## Contents
+## Why it's different
 
-- [What you can do](#what-you-can-do)
-- [How it compares](#how-it-compares)
-- [Setup](#setup)
-- [Tools reference](#tools-reference)
-- [Safety model](#safety-model)
-- [Configuration](#configuration)
-- [Command line](#command-line)
-- [FAQ](#faq)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [Disclaimer](#disclaimer)
+- **It does the things creators actually do.** Publish and schedule posts (text, images, PDF carousels), read post and profile analytics, reply to comments, react, manage invitations and messages. Most LinkedIn MCP servers only read.
+- **You approve every send.** Each post, comment, reaction, message or invitation comes back as a preview first. In clients that support it, you approve in a dialog the AI can't click for you.
+- **It tells you what really happened.** After sending, it checks LinkedIn and reports `sent`, `unconfirmed` (don't retry) or `not_sent` (safe to retry), instead of assuming the click worked.
+- **It keeps you at a human pace.** Daily and weekly caps, a 14-day warm-up, working hours, one action at a time, and an automatic pause the moment LinkedIn shows a security check or starts rate-limiting.
+- **It installs in one line and stays installed.** `npx`, no Python. Dependencies are pinned and shrinkwrapped, so an upstream release can't break your setup overnight.
 
-## What you can do
+## Quick start
 
-Talk to your assistant normally. Some examples:
-
-**Posting and scheduling**
-- "Turn these meeting notes into a LinkedIn post and schedule it for Tuesday at 9am."
-- "Post this carousel PDF with the title 'Five pricing mistakes' and a short intro."
-- "What do I have scheduled this week?"
-
-**Analytics**
-- "How did my last five posts do? Which one got the most impressions per reaction?"
-- "Show me the demographics of people who saw my post about hiring."
-- "How many profile viewers and search appearances did I get this week?"
-
-**Engagement**
-- "Summarise the comments on my latest post and draft a reply to each question."
-- "What's new in my notifications? Anything I should respond to?"
-- "Find posts from the past week about MCP servers and suggest three I could add something useful to."
-
-**Network and messages**
-- "Who's sent me connection requests? Accept the ones who work in product."
-- "Read my conversation with Chris and draft a reply suggesting Thursday."
-- "Look up the founders of Northwind Labs and tell me what they've posted about recently."
-
-Every action that sends something (post, comment, reaction, message, connection request) comes back to you as a preview first. The assistant shows it to you, and only sends it after you say yes.
-
-## How it compares
-
-The best-known open-source alternative is [stickerdaniel/linkedin-mcp-server](https://github.com/stickerdaniel/linkedin-mcp-server), a good Python server built mainly for research and outreach. linkedin-mcp is built for running your own presence. The table compares what each one's README and code show today (November 2026).
-
-| | **linkedin-mcp** (this project) | [stickerdaniel/linkedin-mcp-server](https://github.com/stickerdaniel/linkedin-mcp-server) |
-|---|---|---|
-| Install | `npx` (Node 20+) | `uvx` (Python), `.mcpb` bundle, Docker or plugins |
-| Create posts (text, images, PDF carousels) | Yes | No |
-| Schedule posts with LinkedIn's scheduler | Yes | No |
-| Your own post and profile analytics | Yes | No |
-| Comment and reply to comments | Yes | No |
-| React to posts | Yes | |
-| Read feed, comments and notifications | Yes | Feed, yes |
-| Messages and connection requests | Yes | Yes |
-| Profiles, companies, people search | Yes (capped) | Yes |
-| Job search | No | Yes |
-| Preview and confirmation token for every send | Yes | |
-| Daily and weekly caps, warm-up, working hours | Yes | |
-| Automatic pause on LinkedIn security checks | Yes | |
-
-Blank cells mean we didn't check, not that the feature is missing.
-
-Paid tools do more in some areas (team features, hosted scheduling, CRM integrations) and cost a monthly subscription:
-
-| Tool | What it's for | Price |
-|---|---|---|
-| [Taplio](https://taplio.com) | LinkedIn content, scheduling and analytics | From about $39/month |
-| [Phantombuster](https://phantombuster.com) | Automation and data extraction across platforms | From about $69/month, limited free tier |
-| [Expandi](https://expandi.io) | LinkedIn outreach campaigns | From about $99/month per account |
-
-Prices are from each vendor's site in November 2026 and may have changed. linkedin-mcp is free and runs on your own computer.
-
-## Setup
-
-### 1. Sign in once
+**1. Sign in once.** A Chrome window opens on LinkedIn. Sign in as usual, including 2FA, and the window closes by itself.
 
 ```bash
 npx @danishfareed/linkedin-mcp login
 ```
 
-A Chrome window opens on LinkedIn. Sign in as usual, including 2FA. The window closes when you're signed in. Your session is saved in `~/.config/linkedin-mcp/profile/` on your computer.
-
-linkedin-mcp uses Google Chrome if it's installed. If not, install Chrome or run `npx patchright install chromium` once.
-
-### 2. Add it to your AI client
-
-Most clients use the same JSON:
+**2. Add it to your AI client.** Most clients use this JSON:
 
 ```json
 {
@@ -125,92 +68,175 @@ Most clients use the same JSON:
 | **Cline** | MCP Servers → Configure → `cline_mcp_settings.json` |
 | **ChatGPT desktop** | Settings → MCP servers → Add server → STDIO (or `~/.codex/config.toml`) |
 
-Step-by-step instructions for each client, with paths for every OS, local HTTP mode and ChatGPT on the web, are in **[docs/clients.md](docs/clients.md)**.
+Paths for every OS, local HTTP mode and timeout settings are in **[docs/clients.md](docs/clients.md)**.
 
-### 3. Check it works
-
-Restart your client and ask: *"Check my LinkedIn session status."* You should see your name. To check every page linkedin-mcp reads, run:
+**3. Check it.** Restart your client and ask *"Check my LinkedIn session status."* To check every page linkedin-mcp reads:
 
 ```bash
 npx @danishfareed/linkedin-mcp doctor
 ```
 
-**Try it safely first:** add `"env": { "LINKEDIN_MCP_DRY_RUN": "true" }` to the config above. Every write action will be previewed and simulated, but nothing is sent.
+> [!TIP]
+> **Try it with nothing sent.** Add `"env": { "LINKEDIN_MCP_DRY_RUN": "true" }` to the config above: every action is previewed and simulated. Or use `LINKEDIN_MCP_READ_ONLY=true` to hide every tool that sends something.
 
-## Tools reference
+> [!NOTE]
+> **Early release (0.1).** The safety layer is tested end to end. The parts that read and click LinkedIn's pages are new, and LinkedIn changes its layout often, so some tools will need fixes as more people use them. Run `doctor` to check yours and [report anything broken](https://github.com/danishfareed/Linkedin-MCP/issues/new?template=broken-selector.yml).
 
-All tools return JSON. Write tools return a preview and a `confirmation_token`; nothing happens until `confirm_action` is called with it, after you approve.
+## How it works
 
-### Content and analytics
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/how-it-works-dark.png">
+  <img alt="Your AI client talks MCP to linkedin-mcp on your computer, which drives a Chrome profile you signed in to; LinkedIn sees one person using their own account. Every send goes through preview, your approval, checks, human pace, the guard and the audit log." src="docs/assets/how-it-works-light.png" width="100%">
+</picture>
+
+Everything runs on your computer. linkedin-mcp drives a real Chrome window with your own saved session, one action at a time. Nothing leaves your machine except the browser's normal traffic to LinkedIn: no telemetry, no hosted component.
+
+## What you can ask
+
+**Posting and scheduling**
+- "Turn these meeting notes into a LinkedIn post and schedule it for Tuesday at 9am."
+- "Post this carousel PDF with the title 'Five pricing mistakes' and a short intro."
+- "What do I have scheduled this week?"
+
+**Analytics**
+- "How did my last five posts do? Which one got the most impressions per reaction?"
+- "Who saw my post about hiring? Show me the demographics."
+- "How many profile viewers and search appearances did I get this week?"
+
+**Engagement**
+- "Summarise the comments on my latest post and draft a reply to each question."
+- "What's new in my notifications? Anything I should respond to?"
+- "Find posts from this week about MCP servers, newest first, and suggest three I could add something useful to."
+
+**Jobs, research and network**
+- "Find remote senior product designer roles posted this week and summarise the three best fits."
+- "Look up the founders of Northwind Labs and tell me what they've posted about recently."
+- "Who's sent me connection requests? Accept the ones who work in product."
+- "Read my conversation with Chris and draft a reply suggesting Thursday."
+
+## Tools
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/tools-dark.png">
+  <img alt="Every linkedin-mcp tool, grouped: posting and analytics, research, engagement, jobs, network and messages, session and safety. Tools that send something are marked; they return a preview you approve first." src="docs/assets/tools-light.png" width="100%">
+</picture>
+
+All tools return compact JSON. Tools that send something return a preview and a `confirmation_token`. Nothing happens until `confirm_action` is called with it, after you approve.
+
+<details>
+<summary><b>Posting and analytics</b></summary>
 
 | Tool | What it does | Type |
 |---|---|---|
-| `create_post` | Publish a post now: text up to 3,000 characters, up to 9 images, or a PDF/PPTX/DOCX carousel with a title. Visibility: anyone or connections. | Write · post cap |
-| `schedule_post` | Same inputs plus `publish_at`. Uses LinkedIn's own scheduler, so it publishes even when your computer is off. 15-minute slots, 30 minutes to 90 days ahead. | Write · post cap |
-| `list_scheduled_posts` | Posts waiting in LinkedIn's scheduler. | Read |
-| `delete_post` | Delete one of your posts. | Write |
-| `get_my_posts` | Your recent posts (up to 20) with impressions, reactions, comments and reposts. | Read |
-| `get_post_analytics` | Impressions, members reached, profile views, followers gained, reactions, comments, reposts, saves, sends and top viewer demographics for one of your posts. | Read |
-| `get_profile_analytics` | Post impressions, followers, profile viewers and search appearances, with LinkedIn's trend for each. | Read |
+| `create_post` | Publish a post now: text up to 3,000 characters, up to 9 images, or a PDF/PPTX/DOCX carousel with a title. Visibility: anyone or connections. | Sends · post cap |
+| `schedule_post` | Same inputs plus `publish_at`. Uses LinkedIn's own scheduler, so it publishes even when your computer is off. 15-minute slots, 30 minutes to 90 days ahead. | Sends · post cap |
+| `list_scheduled_posts` | Posts waiting in LinkedIn's scheduler. | Reads |
+| `delete_post` | Delete one of your posts. | Sends |
+| `get_my_posts` | Your recent posts (up to 20) with impressions, reactions, comments and reposts. | Reads |
+| `get_post_analytics` | Impressions, members reached, profile views, followers gained, reactions, comments, reposts, saves, sends and top viewer demographics for one of your posts. | Reads |
+| `get_profile_analytics` | Post impressions, followers, profile viewers and search appearances, with LinkedIn's trend for each. | Reads |
 
-### Engagement
+</details>
 
-| Tool | What it does | Type |
-|---|---|---|
-| `get_feed` | Recent posts from your home feed (up to 20). Promoted posts skipped. | Read |
-| `search_posts` | Search posts by keywords, optionally past 24 hours, week or month (up to 20). | Read · search cap |
-| `get_post_comments` | Comments and replies on a post (up to 50), each with an id for replying. | Read |
-| `react_to_post` | Like, celebrate, support, love, insightful or funny. Never removes an existing reaction. | Write · reaction cap |
-| `comment_on_post` | Comment on a post (up to 1,250 characters). | Write · comment cap |
-| `reply_to_comment` | Reply to a specific comment. | Write · comment cap |
-| `get_notifications` | Recent notifications with links (up to 30). | Read |
-
-### Research (read-only, capped)
+<details>
+<summary><b>Engagement</b></summary>
 
 | Tool | What it does | Type |
 |---|---|---|
-| `get_person_profile` | One person's profile: name, headline, location, plus the sections you ask for (about, experience, education, skills, certifications, languages, volunteering, projects). | Read · profile-view cap |
-| `get_my_profile` | Your own profile. | Read |
-| `get_company_profile` | A company's overview, website, industry, size, headquarters, founding year, specialties and followers. | Read · profile-view cap |
-| `search_people` | Up to 10 people: name, headline, location, profile URL, degree. Filters: network, title, company, first/last name, school. No bulk export. | Read · search cap |
-| `search_companies` | Up to 10 companies. | Read · search cap |
+| `get_feed` | Recent posts from your home feed (up to 20), each with its own link. Promoted posts skipped. | Reads |
+| `search_posts` | Search posts by keywords, by relevance or newest first, optionally from the past 24 hours, week or month, or only posts with photos, videos or documents (up to 20). | Reads · search cap |
+| `get_post_comments` | Comments and replies on a post (up to 50), each with an id for replying. | Reads |
+| `react_to_post` | Like, celebrate, support, love, insightful or funny. Never removes an existing reaction. | Sends · reaction cap |
+| `comment_on_post` | Comment on a post (up to 1,250 characters). | Sends · comment cap |
+| `reply_to_comment` | Reply to a specific comment. | Sends · comment cap |
+| `get_notifications` | Recent notifications with links (up to 30). | Reads |
 
-### Network and messaging
+</details>
+
+<details>
+<summary><b>Jobs</b></summary>
 
 | Tool | What it does | Type |
 |---|---|---|
-| `send_connection_request` | Connect with an optional note (200 characters, 300 with Premium). | Write · connection cap |
-| `list_invitations` | Pending invitations, received or sent. | Read |
-| `respond_to_invitation` | Accept or ignore a received invitation. | Write |
-| `get_inbox` | Recent conversations with last message, time and unread status (up to 20). | Read |
-| `get_conversation` | Messages in one conversation (up to 50), by thread URL or a connection's profile. | Read |
-| `send_message` | Message a connection or an existing thread. | Write · message cap |
+| `search_jobs` | Up to 25 jobs by keywords and location, filtered by date posted, on-site/remote/hybrid, experience level and Easy Apply. | Reads · search cap |
+| `get_job_details` | One job's title, company, location, workplace type, salary and applicant count when shown, description, and how to apply. | Reads |
+| `get_saved_jobs` | Jobs you've saved on LinkedIn. | Reads |
 
-### Session and safety
+linkedin-mcp never applies to jobs for you.
+
+</details>
+
+<details>
+<summary><b>Research (read-only, capped)</b></summary>
+
+| Tool | What it does | Type |
+|---|---|---|
+| `get_person_profile` | One person's profile: name, headline, location, plus the sections you ask for (about, experience, education, skills, certifications, languages, volunteering, projects). | Reads · profile-view cap |
+| `get_person_posts` | A person's recent posts (up to 20) with dates, reactions, comments and links. | Reads · profile-view cap |
+| `get_my_profile` | Your own profile. | Reads |
+| `get_company_profile` | A company's overview, website, industry, size, headquarters, founding year, specialties and followers. | Reads · profile-view cap |
+| `get_company_posts` | A company page's recent posts (up to 20). | Reads · profile-view cap |
+| `search_people` | Up to 10 people: name, headline, location, profile URL, degree. Filters: network, title, company, first/last name, school. No bulk export. | Reads · search cap |
+| `search_companies` | Up to 10 companies. | Reads · search cap |
+
+</details>
+
+<details>
+<summary><b>Network and messages</b></summary>
+
+| Tool | What it does | Type |
+|---|---|---|
+| `send_connection_request` | Connect with an optional note (200 characters, 300 with Premium). | Sends · connection cap |
+| `list_invitations` | Pending invitations, received or sent. | Reads |
+| `respond_to_invitation` | Accept or ignore a received invitation. | Sends |
+| `get_inbox` | Recent conversations with last message, time and unread status (up to 20). | Reads |
+| `get_conversation` | Messages in one conversation (up to 50), by thread URL or a connection's profile. Opening a thread marks it read on LinkedIn. | Reads |
+| `send_message` | Message a connection or an existing thread. Checks the recipient's name before typing. | Sends · message cap |
+
+</details>
+
+<details>
+<summary><b>Session and safety</b></summary>
 
 | Tool | What it does |
 |---|---|
-| `session_status` | Signed in or not, whose account, paused or not, warm-up status. Checks the session cookie without loading a page unless you pass `verify: true`. |
+| `session_status` | Whose account, paused or not, warm-up, read-only and dry-run modes. Answers from saved state without opening the browser unless you pass `verify: true`. |
 | `get_limits` | Usage today and over the last 7 days against every cap, with reset times. |
-| `set_limits` | Change daily caps, lower freely, or raise up to the hard ceiling. |
+| `set_limits` | Change daily caps: lower freely, or raise up to the hard ceiling. |
 | `get_audit_log` | Recent write actions, guard trips and pauses. |
 | `pause` / `resume` | Stop all LinkedIn activity (optionally for N minutes) and start it again. |
-| `confirm_action` | Execute a previewed action with its token, after you approve. |
+| `confirm_action` | Run a previewed action with its token, after you approve. |
 | `cancel_action` | Throw away a preview's token. |
 
-## Safety model
+</details>
 
-LinkedIn's terms don't allow automation (see the [disclaimer](#disclaimer)), and accounts that behave like bots get restricted. linkedin-mcp is designed so that following the defaults keeps your activity looking like what it is: one person, using their own account, at a human pace.
+## Safety
+
+LinkedIn's terms don't allow automation (see the [disclaimer](#disclaimer)), and accounts that behave like bots get restricted. linkedin-mcp is designed so that the defaults keep your activity looking like what it is: one person, using their own account, at a human pace.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/safety-dark.png">
+  <img alt="Daily caps halved during a 14-day warm-up, working hours from 08:00 to 21:00, and the guard that pauses everything for 24 hours when LinkedIn shows a security check." src="docs/assets/safety-light.png" width="100%">
+</picture>
 
 ### You approve everything that's sent
 
-Every write tool returns a preview of exactly what will be sent and where, plus a single-use `confirmation_token`. The assistant must show you the preview and call `confirm_action` only after you say yes.
+- Every tool that sends something returns a preview of exactly what will be sent and where, plus a single-use `confirmation_token` that expires after 10 minutes.
+- The token is bound to the exact text, target and files in the preview. Attached files are fingerprinted, and a file that changes before you confirm is refused.
+- **Approval in your AI client.** When your client supports MCP dialogs (elicitation), `confirm_action` also asks you directly, showing every field of the preview. The model can't answer that dialog, so a feed post or message written to manipulate your assistant can't get anything sent. Declining sends nothing.
+- Feed posts, comments and messages are passed to your assistant as data from other people. Read previews before approving, especially messages and connection notes.
 
-- Tokens expire after 10 minutes and work once.
-- Each token is cryptographically bound to the exact text, target and files that were previewed, so it can't be reused for something else.
-- Attached files are fingerprinted at preview time. If a file changes before you confirm, the action is refused.
-- `LINKEDIN_MCP_DRY_RUN=true` simulates confirmed actions without sending anything.
-- Reactions can skip confirmation if you choose (`"confirm": { "reactions": false }` in the config). Everything else always confirms.
+### Sends are checked, not assumed
+
+After the final click, linkedin-mcp reads LinkedIn back: the message appears in the thread, the invitation shows as pending, the comment is under the post. The result is one of:
+
+| Result | Meaning | Retry? |
+|---|---|---|
+| `sent` | Confirmed on LinkedIn. | No need. |
+| `unconfirmed` | The send button was clicked but LinkedIn didn't show the result. | **No.** Check LinkedIn first, or you may send it twice. |
+| `not_sent` | Stopped before sending, with the reason (for example LinkedIn asked for the person's email). | Yes, once the reason is dealt with. |
+
+Before sending a message, linkedin-mcp checks that the conversation window names the person you asked for.
 
 ### Daily and weekly caps
 
@@ -227,24 +253,18 @@ Every write tool returns a preview of exactly what will be sent and where, plus 
 
 - Lower any cap with `set_limits`. You can raise caps up to the hard ceiling, never above it.
 - **Warm-up:** for the first 14 days after your first sign-in, every daily cap is halved.
-- When a cap is hit, the tool says when it resets. Nothing is queued or retried behind your back.
-- Attempts count, even if LinkedIn then fails, so errors can't be used to go over a cap.
+- When a cap is hit, the tool says when it resets. Nothing is queued or retried behind your back. Attempts count even if LinkedIn then fails, so errors can't be used to go over a cap.
 
 ### Working hours and pacing
 
-- Write actions only run between 08:00 and 21:00 your local time by default. Reads work at any time.
-- One browser, one tab, one action at a time. Consecutive actions are spaced by a randomised human-like gap (around 4 seconds typical, 1.5 to 20 seconds), with a pause after each page load and natural typing speed for comments and messages. Long posts are entered paragraph by paragraph, the way people paste a draft.
+- Sends only run between 08:00 and 21:00 your local time by default. Reads work at any time.
+- One browser, one tab, one action at a time, with a randomised human-like gap between actions (around 4 seconds typical), a pause after each page load and natural typing for short text.
+- Each tool call has a time budget (55 seconds by default) so it answers before typical client timeouts.
 - The browser uses your system's locale and timezone. Nothing is randomised or spoofed.
 
-### Automatic pause on security checks
+### Automatic pause
 
-After every page load, linkedin-mcp checks for CAPTCHAs, verification prompts, "unusual activity" notices, restriction pages and sign-in walls. If it sees one, it:
-
-1. stops all tools for 24 hours (or until you resume),
-2. records it in the audit log,
-3. tells you how to fix it: open a visible window with `login`, resolve the check yourself, then resume.
-
-It never tries to solve a challenge.
+After every page load, linkedin-mcp checks for CAPTCHAs, verification prompts, "unusual activity" notices, restriction pages and sign-in walls, and watches for LinkedIn's rate-limit responses. If it sees one, it stops all tools (24 hours for a security check, a few hours for rate limiting), records it in the audit log, and tells you what to do. It never tries to solve a challenge.
 
 ### Audit log
 
@@ -252,18 +272,55 @@ Every confirmed action is appended to `~/.config/linkedin-mcp/state/audit.jsonl`
 
 ### What it won't do
 
-These are deliberately out of scope: multiple accounts, proxies, CAPTCHA solving, fingerprint spoofing, bulk scraping or exporting people's data, and mass messaging or connection campaigns. linkedin-mcp is for running your own account, not for growth hacking.
+Deliberately out of scope: multiple accounts, proxies, CAPTCHA solving, fingerprint spoofing, bulk scraping or exporting people's data, applying to jobs, and mass messaging or connection campaigns. linkedin-mcp is for running your own account, not for growth hacking.
+
+## How it compares
+
+The best-known open-source alternative is [stickerdaniel/linkedin-mcp-server](https://github.com/stickerdaniel/linkedin-mcp-server), a good Python server built mainly for research, jobs and outreach. linkedin-mcp is built for running your own presence. This compares the two projects' tool lists and docs as of November 2026.
+
+| | **linkedin-mcp** (this project) | stickerdaniel/linkedin-mcp-server |
+|---|---|---|
+| Install | `npx` (Node 20+), pinned and shrinkwrapped | `uvx` (Python), `.mcpb` bundle, Docker or plugins |
+| Create and schedule posts (images, PDF carousels) | Yes | No |
+| Post and profile analytics | Yes | No |
+| Comment, reply and react | Yes | No |
+| Notifications and invitation management | Yes | No |
+| Feed, post search, profiles, companies, people search | Yes | Yes |
+| A person's and a company's posts | Yes | Yes |
+| Job search, job details, saved jobs | Yes | Yes, plus apply links and Easy Apply forms |
+| Messages and connection requests | Yes | Yes, plus conversation search and archive |
+| Company employees, "people also viewed" | No | Yes |
+| Confirmation before sending | Preview, token, and a dialog in supporting clients | Dialog in supporting clients |
+| Daily and weekly caps, warm-up, working hours | Yes | No (pacing is left to the client) |
+| Read-only mode, dry-run mode | Yes | No |
+| Pause on security checks and rate limits | Yes | Rate limits reported |
+
+Paid tools do more in some areas (team features, hosted scheduling, CRM integrations) and cost a monthly subscription:
+
+| Tool | What it's for | Price |
+|---|---|---|
+| [Taplio](https://taplio.com) | LinkedIn content, scheduling and analytics | From about $39/month |
+| [Phantombuster](https://phantombuster.com) | Automation and data extraction across platforms | From about $69/month, limited free tier |
+| [Expandi](https://expandi.io) | LinkedIn outreach campaigns | From about $99/month per account |
+
+Prices are from each vendor's site in November 2026 and may have changed. linkedin-mcp is free and runs on your own computer.
 
 ## Configuration
 
-Settings come from environment variables (set them in your client's MCP config under `env`) or `~/.config/linkedin-mcp/config.json`. Environment variables win.
+Settings come from environment variables (set them under `env` in your client's MCP config) or `~/.config/linkedin-mcp/config.json`. Environment variables win.
+
+<details>
+<summary><b>All settings</b></summary>
 
 | Environment variable | Default | What it does |
 |---|---|---|
-| `LINKEDIN_MCP_DRY_RUN` | `false` | Simulate write actions instead of sending. |
-| `LINKEDIN_MCP_HEADLESS` | `true` | `false` shows the browser window while the assistant works. |
-| `LINKEDIN_MCP_WORKING_HOURS` | `08:00-21:00` | When write actions may run, local time. `off` disables the check. Overnight ranges like `22:00-06:00` work. |
+| `LINKEDIN_MCP_DRY_RUN` | `false` | Simulate sends instead of sending. |
+| `LINKEDIN_MCP_READ_ONLY` | `false` | Hide every tool that can send something. |
+| `LINKEDIN_MCP_CONFIRM_IN_CLIENT` | `true` | Ask for approval in a dialog when the client supports it. |
 | `LINKEDIN_MCP_CONFIRM_REACTIONS` | `true` | `false` lets reactions run without a confirmation step. |
+| `LINKEDIN_MCP_HEADLESS` | `true` | `false` shows the browser window while the assistant works. |
+| `LINKEDIN_MCP_WORKING_HOURS` | `08:00-21:00` | When sends may run, local time. `off` disables the check. Overnight ranges like `22:00-06:00` work. |
+| `LINKEDIN_MCP_TOOL_TIMEOUT_SECONDS` | `55` | Time budget for one tool call (20 to 600). Raise it if your client allows longer calls. |
 | `LINKEDIN_MCP_IDLE_TIMEOUT_MINUTES` | `10` | Close the browser after this long without a tool call. |
 | `LINKEDIN_MCP_BROWSER_CHANNEL` | `auto` | `auto` (Chrome if installed, else bundled Chromium), `chrome`, `chromium` or `msedge`. |
 | `LINKEDIN_MCP_CHROME_PATH` | | Path to a specific Chrome executable. |
@@ -276,83 +333,116 @@ Example `~/.config/linkedin-mcp/config.json`:
 ```json
 {
   "workingHours": { "start": "09:00", "end": "18:30" },
-  "confirm": { "reactions": true },
+  "confirm": { "reactions": true, "inClient": true },
   "limits": { "comment": 10, "connection": 5 },
-  "idleTimeoutMinutes": 15
+  "toolTimeoutSeconds": 90
 }
 ```
+
+</details>
 
 ## Command line
 
 ```bash
-npx @danishfareed/linkedin-mcp              # start the MCP server over stdio (what clients run)
-npx @danishfareed/linkedin-mcp login        # sign in, in a visible browser window
-npx @danishfareed/linkedin-mcp status       # sign-in, pause, warm-up and limits summary
-npx @danishfareed/linkedin-mcp doctor       # check the browser, sign-in and every page it reads (read-only)
-npx @danishfareed/linkedin-mcp resume       # clear a pause after you've resolved a LinkedIn check
-npx @danishfareed/linkedin-mcp logout       # delete the saved browser profile
-npx @danishfareed/linkedin-mcp --http       # local Streamable HTTP on 127.0.0.1:3333/mcp, token required
+npx @danishfareed/linkedin-mcp                  # start the MCP server over stdio (what clients run)
+npx @danishfareed/linkedin-mcp login            # sign in, in a visible browser window
+npx @danishfareed/linkedin-mcp status           # sign-in, pause, warm-up and limits summary
+npx @danishfareed/linkedin-mcp doctor           # check the browser, sign-in and every page it reads (read-only)
+npx @danishfareed/linkedin-mcp resume           # clear a pause after you've resolved a LinkedIn check
+npx @danishfareed/linkedin-mcp install-browser  # download the Chromium build this version expects
+npx @danishfareed/linkedin-mcp logout           # delete the saved browser profile
+npx @danishfareed/linkedin-mcp --http           # local Streamable HTTP on 127.0.0.1:3333/mcp, token required
 ```
 
 Other options: `--headed` (show the browser while serving), `--dry-run`, `--port <n>`, `status --verify`, `doctor --offline`, `login --keep-open`, `logout --yes`.
 
 ## FAQ
 
-### Will my account get banned?
+<details>
+<summary><b>Will my account get banned?</b></summary>
 
-It can happen. LinkedIn's User Agreement prohibits automated access, and LinkedIn does restrict accounts it thinks are automated. linkedin-mcp is built to keep the risk down: it uses a real browser you signed in to yourself, does one thing at a time at a human pace, keeps daily and weekly activity under conservative caps, halves those caps for the first two weeks, only acts during working hours, and stops completely the moment LinkedIn shows a warning. It does not hide what it is or try to beat detection. The defaults are deliberately cautious, but there's no guarantee. Don't use it on an account you can't afford to lose.
+It can happen. LinkedIn's User Agreement prohibits automated access, and LinkedIn does restrict accounts it thinks are automated. linkedin-mcp is built to keep the risk down: a real browser you signed in to yourself, one thing at a time at a human pace, conservative daily and weekly caps, halved caps for the first two weeks, working hours, and a full stop the moment LinkedIn shows a warning or starts rate-limiting. It doesn't hide what it is or try to beat detection. There's no guarantee. Don't use it on an account you can't afford to lose.
 
-### Is it really free?
+</details>
+
+<details>
+<summary><b>Is it really free?</b></summary>
 
 Yes. It's open source under Apache-2.0, runs entirely on your computer, and has no paid tier, account or telemetry. You need an AI client that supports MCP (many have free plans) and a LinkedIn account.
 
-### How is this different from other LinkedIn MCP servers?
+</details>
 
-Most open-source LinkedIn MCP servers focus on research: reading profiles, companies and job listings. linkedin-mcp covers research too, but it's built for running your own presence: posting, scheduling, analytics, comments, notifications, invitations and messages, with confirmation, caps and an automatic pause built in. It installs with one `npx` command (no Python). See [How it compares](#how-it-compares).
+<details>
+<summary><b>Can my assistant send something without me?</b></summary>
 
-### Does it work with Sales Navigator or Recruiter?
+Not through linkedin-mcp. Every send needs a token from a preview, and `confirm_action` is the only way to use it. In clients that support MCP dialogs, you also approve in a dialog the model can't answer. For extra certainty, set `LINKEDIN_MCP_READ_ONLY=true` and the sending tools disappear entirely.
 
-No. It works with regular LinkedIn (free or Premium). Sales Navigator, Recruiter, company page admin, ads, job applications, polls, events and video uploads aren't supported.
+</details>
 
-### Does it store my password?
+<details>
+<summary><b>Does it store my password?</b></summary>
 
-No. You sign in yourself in a normal Chrome window. linkedin-mcp only keeps the browser profile, which holds the session cookies, in `~/.config/linkedin-mcp/profile/` on your computer. Delete it any time with `logout`.
+No. You sign in yourself in a normal Chrome window. linkedin-mcp keeps only the browser profile, which holds the session cookies, in `~/.config/linkedin-mcp/profile/` on your computer. Delete it any time with `logout`. Sign in with your email and password or a passkey: Google and Apple sign-in usually refuse to work inside an automated browser.
 
-### Do scheduled posts need my computer on?
+</details>
+
+<details>
+<summary><b>Do scheduled posts need my computer on?</b></summary>
 
 No. `schedule_post` uses LinkedIn's built-in scheduler, so LinkedIn publishes the post at the scheduled time.
 
-### Can I run it on a server or in the cloud?
+</details>
+
+<details>
+<summary><b>Does it work with Sales Navigator or Recruiter?</b></summary>
+
+No. It works with regular LinkedIn (free or Premium). Sales Navigator, Recruiter, company page admin, ads, job applications, polls, events and video uploads aren't supported.
+
+</details>
+
+<details>
+<summary><b>Can I run it on a server or in the cloud?</b></summary>
 
 It's designed for your own computer, where you sign in and where LinkedIn already sees you. Running it from a data centre IP is far more likely to trigger LinkedIn's security checks. There's no hosted version.
 
-### Does it work if my LinkedIn is in another language?
+</details>
 
-Reading mostly works, but buttons are found by their English labels, so actions like posting may fail with `SELECTOR_BROKEN`. Set LinkedIn's language to English for now. Contributions for other languages are welcome.
+<details>
+<summary><b>Does it work if my LinkedIn is in another language?</b></summary>
 
-### Which AI clients does it work with?
+Reading mostly works. Sending needs LinkedIn's display language set to English: linkedin-mcp checks the page language before it types anything and stops with `UNSUPPORTED_LANGUAGE` rather than failing halfway. Change it under Settings → Account preferences → Display language. Contributions for other languages are welcome.
+
+</details>
+
+<details>
+<summary><b>Which AI clients does it work with?</b></summary>
 
 Any client that supports local MCP servers over stdio: Claude Desktop, Claude Code, Cursor, VS Code, Devin Desktop (formerly Windsurf), Cline, the ChatGPT desktop app and others. ChatGPT on the web can't reach a server on your computer. See [docs/clients.md](docs/clients.md).
 
-### Can I use it alongside stickerdaniel's LinkedIn MCP server?
+</details>
 
-Yes. linkedin-mcp keeps its data in `~/.config/linkedin-mcp`, separate from that server's `~/.linkedin-mcp`, so they don't share a browser profile or delete each other's files. Both are separate browser sessions on the same account, though, so LinkedIn sees the combined activity; don't run them both heavily.
+<details>
+<summary><b>Can I use it alongside stickerdaniel's LinkedIn MCP server?</b></summary>
+
+Yes. linkedin-mcp keeps its data in `~/.config/linkedin-mcp`, separate from that server's `~/.linkedin-mcp`, so they don't share a browser profile or delete each other's files. Both are separate browser sessions on the same account, though, so LinkedIn sees the combined activity. Don't run them both heavily.
+
+</details>
 
 ## Troubleshooting
 
 Run `npx @danishfareed/linkedin-mcp doctor` first. Common fixes:
 
 - **`NOT_LOGGED_IN`**: run `npx @danishfareed/linkedin-mcp login`.
-- **`CHECKPOINT` or `CIRCUIT_OPEN`**: LinkedIn showed a security check and everything is paused. Run `login`, resolve it in the window, then ask your assistant to `resume`. Don't retry until you have.
+- **`CHECKPOINT` or `CIRCUIT_OPEN`**: LinkedIn showed a security check and everything is paused. Run `login`, resolve it in the window, then ask your assistant to `resume`.
+- **`RATE_LIMITED`**: LinkedIn is limiting requests. linkedin-mcp has paused itself; wait, and lower your caps if it happens again.
 - **`SELECTOR_BROKEN`**: LinkedIn changed its layout. [Report it](https://github.com/danishfareed/Linkedin-MCP/issues/new?template=broken-selector.yml) with the selector name from the error.
-- **"profile is already open in another process"**: close the login window or other MCP clients using linkedin-mcp.
-- **"No usable browser was found"**: install Chrome, or run `npx patchright install chromium`.
+- **"No usable browser was found"**: install Chrome, or run `npx @danishfareed/linkedin-mcp install-browser`.
 
 Full guide by error code: **[docs/troubleshooting.md](docs/troubleshooting.md)**.
 
 ## Contributing
 
-The most valuable help is keeping up with LinkedIn's layout changes. Every selector lives in one file, [`src/linkedin/selectors.ts`](src/linkedin/selectors.ts), and parsers are tested against saved page snapshots, so most fixes are a few lines plus a test. See **[CONTRIBUTING.md](CONTRIBUTING.md)**.
+The most valuable help is keeping up with LinkedIn's layout changes. Every selector lives in one file, [`src/linkedin/selectors.ts`](src/linkedin/selectors.ts), and parsers are tested against saved page snapshots, so most fixes are a few lines plus a test. See **[CONTRIBUTING.md](CONTRIBUTING.md)**. The images in this README are HTML in [`docs/assets/src`](docs/assets/src), rendered with `node scripts/assets/render.mjs`.
 
 ## Disclaimer
 

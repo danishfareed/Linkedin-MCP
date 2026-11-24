@@ -31,6 +31,9 @@ Add these to the `env` block of any snippet below. In JSON, write the values as 
 | `LINKEDIN_MCP_DRY_RUN` | `"true"` | Simulates write actions (posts, comments, messages) without sending anything. Good for a first try. |
 | `LINKEDIN_MCP_HEADLESS` | `"false"` | Shows the browser window while the server works. |
 | `LINKEDIN_MCP_WORKING_HOURS` | `"08:00-21:00"` | Only allows write actions inside these hours. Use `"off"` to disable. |
+| `LINKEDIN_MCP_READ_ONLY` | `"true"` | Hides every tool that can send something. Reading still works. |
+| `LINKEDIN_MCP_CONFIRM_IN_CLIENT` | `"false"` | Turns off the approval dialog in clients that support MCP dialogs (the preview and token step stays). |
+| `LINKEDIN_MCP_TOOL_TIMEOUT_SECONDS` | `"90"` | Time budget for one tool call. The default, 55, fits clients that give up after 60 seconds. Only raise it if your client waits longer. |
 
 ## Claude Desktop
 
@@ -231,6 +234,8 @@ To open the file the extension is actually using, click the **MCP Servers** icon
 
 From the Cline CLI: `cline mcp add linkedin --yes -- npx -y @danishfareed/linkedin-mcp`. Keep `autoApprove` empty unless you're sure, so you see each tool call before it runs.
 
+Cline gives each tool call 60 seconds by default, which matches linkedin-mcp's default budget. If you raise `LINKEDIN_MCP_TOOL_TIMEOUT_SECONDS`, also add `"timeout": <seconds>` to the server's entry, a little above the value you chose.
+
 Docs: [Cline MCP](https://docs.cline.bot/mcp/mcp-overview)
 
 ## ChatGPT
@@ -306,7 +311,9 @@ For Claude Desktop, use the stdio setup above.
 
 ## Troubleshooting
 
-- **"Not signed in" errors:** run `npx @danishfareed/linkedin-mcp login` again in a terminal.
+- **"Not signed in" errors:** run `npx @danishfareed/linkedin-mcp login` again in a terminal. Sign in with your email and password or a passkey; Google and Apple sign-in usually refuse to work inside an automated browser.
+- **Tool calls time out:** linkedin-mcp answers within 55 seconds by default so it fits clients that stop waiting at 60. If your client's limit is shorter, lower `LINKEDIN_MCP_TOOL_TIMEOUT_SECONDS` to match (minimum 20); if it's longer, you can raise it.
+- **No approval dialog appears:** only clients that support MCP elicitation show one. Others rely on the preview and confirmation token, which is still required for every send.
 - **"Browser profile is already open in another process":** two things are using the saved LinkedIn session at once, such as two clients or a login window. Close one, or run the HTTP mode once and point all your clients at it.
 - **The client can't find `npx`:** desktop apps don't always get the same `PATH` as your terminal, which is common with nvm. Put the full path to `npx` in `command` (find it with `which npx` on macOS and Linux).
 - **Changes don't show up:** restart the client after editing its config file.
