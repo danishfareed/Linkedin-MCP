@@ -1,10 +1,11 @@
 import { z } from "zod";
 import { withBrowser } from "../context.js";
 import { invalidInput } from "../errors.js";
+import { readCompanyPosts, readPersonPosts } from "../linkedin/pages/activity.js";
 import { listInvitations, readConversation, readInbox, respondToInvitation, searchCompanies, searchPeople, sendMessage } from "../linkedin/pages/lists.js";
 import { readCompany, readMyProfile, readPersonProfile, sendConnectionRequest } from "../linkedin/pages/profile.js";
 import { PROFILE_SECTIONS } from "../linkedin/parse/profile.js";
-import { profileId, profileUrl, threadUrl } from "../linkedin/urls.js";
+import { companySlug, profileId, profileUrl, threadUrl } from "../linkedin/urls.js";
 import { PREVIEW_NOTE, READ, WRITE_PREVIEW, defineTool } from "./registry.js";
 import { defineWrite, prepareWrite } from "./write.js";
 
@@ -12,10 +13,15 @@ const NOTE_FREE_MAX = 200;
 const NOTE_PREMIUM_MAX = 300;
 const MESSAGE_MAX = 8000;
 
+const POSTS_MAX = 20;
+
 const sections = z
   .array(z.enum(PROFILE_SECTIONS))
   .default(["about", "experience", "education"])
   .describe("Which profile sections to read.");
+
+const profileInput = z.string().describe("Profile URL or username, e.g. https://www.linkedin.com/in/jane-doe/ or jane-doe.");
+const companyInput = z.string().describe("Company URL or slug, e.g. https://www.linkedin.com/company/acme/ or acme.");
 
 const connectWrite = defineWrite<{ profile_url: string; note: string | null }>({
   kind: "send_connection_request",
@@ -50,14 +56,35 @@ export const researchTools = [
     name: "get_person_profile",
     title: "Read a LinkedIn profile",
     description: "Read one person's LinkedIn profile: name, headline, location and the sections you ask for. Counts against the daily profile-view limit.",
-    input: { profile: z.string().describe("Profile URL or username, e.g. https://www.linkedin.com/in/jane-doe/ or jane-doe."), sections },
+    input: { profile: profileInput, sections },
     annotations: READ,
-    handler: async (args, ctx) =>
-      withBrowser(ctx, async (nav) => {
-        profileId(args.profile);
+    handler: async (args, ctx) => {
+      profileId(args.profile); // validate before the browser starts
+      await ctx.limits.assertAvailable("profile_view");
+      return withBrowser(ctx, async (nav) => {
         await ctx.limits.consume("profile_view");
         return readPersonProfile(nav, args.profile, args.sections);
-      }),
+      });
+    },
+  }),
+
+  defineTool({
+    name: "get_person_posts",
+    title: "Read a person's recent posts",
+    description:
+      `A person's recent LinkedIn posts and reposts, newest first, at most ${POSTS_MAX}: text, when (relative, e.g. "3d"), reaction, comment and repost counts, and each post's URL. ` +
+      "kind says whether it's their own post or a repost. Their comments and reactions on other people's posts are left out. " +
+      "complete is false, with a note, when fewer posts than asked for could be loaded. Counts against the daily profile-view limit.",
+    input: { profile: profileInput, limit: z.number().int().min(1).max(POSTS_MAX).default(10) },
+    annotations: READ,
+    handler: async (args, ctx) => {
+      profileId(args.profile);
+      await ctx.limits.assertAvailable("profile_view");
+      return withBrowser(ctx, async (nav) => {
+        await ctx.limits.consume("profile_view");
+        return readPersonPosts(nav, args.profile, args.limit);
+      });
+    },
   }),
 
   defineTool({
@@ -78,13 +105,34 @@ export const researchTools = [
     name: "get_company_profile",
     title: "Read a company page",
     description: "Read a LinkedIn company page: overview, website, industry, size, headquarters, founding year, specialties and followers. Counts against the daily profile-view limit.",
-    input: { company: z.string().describe("Company URL or slug, e.g. https://www.linkedin.com/company/acme/ or acme.") },
+    input: { company: companyInput },
     annotations: READ,
-    handler: async (args, ctx) =>
-      withBrowser(ctx, async (nav) => {
+    handler: async (args, ctx) => {
+      companySlug(args.company); // validate before the browser starts
+      await ctx.limits.assertAvailable("profile_view");
+      return withBrowser(ctx, async (nav) => {
         await ctx.limits.consume("profile_view");
         return readCompany(nav, args.company);
-      }),
+      });
+    },
+  }),
+
+  defineTool({
+    name: "get_company_posts",
+    title: "Read a company's recent posts",
+    description:
+      `A company's recent LinkedIn posts from its Posts tab, in the order LinkedIn shows them, at most ${POSTS_MAX}: text, when (relative), reaction, comment and repost counts, and each post's URL. ` +
+      "complete is false, with a note, when fewer posts than asked for could be loaded. Counts against the daily profile-view limit.",
+    input: { company: companyInput, limit: z.number().int().min(1).max(POSTS_MAX).default(10) },
+    annotations: READ,
+    handler: async (args, ctx) => {
+      companySlug(args.company);
+      await ctx.limits.assertAvailable("profile_view");
+      return withBrowser(ctx, async (nav) => {
+        await ctx.limits.consume("profile_view");
+        return readCompanyPosts(nav, args.company, args.limit);
+      });
+    },
   }),
 
   defineTool({
@@ -111,6 +159,7 @@ export const researchTools = [
       if (!args.keywords.trim() && !Object.values(args.filters).some((v) => (Array.isArray(v) ? v.length : v))) {
         throw invalidInput("Give keywords or at least one filter.");
       }
+      await ctx.limits.assertAvailable("search");
       return withBrowser(ctx, async (nav) => {
         await ctx.limits.consume("search");
         return { people: await searchPeople(nav, args.keywords, args.filters, args.limit) };
@@ -124,11 +173,14 @@ export const researchTools = [
     description: "Search LinkedIn for companies by keywords. Returns at most 10 results. Counts against the daily search limit.",
     input: { keywords: z.string().min(1).max(200), limit: z.number().int().min(1).max(10).default(10) },
     annotations: READ,
-    handler: async (args, ctx) =>
-      withBrowser(ctx, async (nav) => {
+    handler: async (args, ctx) => {
+      if (!args.keywords.trim()) throw invalidInput("Give keywords to search for.");
+      await ctx.limits.assertAvailable("search");
+      return withBrowser(ctx, async (nav) => {
         await ctx.limits.consume("search");
         return { companies: await searchCompanies(nav, args.keywords, args.limit) };
-      }),
+      });
+    },
   }),
 ];
 
@@ -189,7 +241,9 @@ export const messagingTools = [
   defineTool({
     name: "get_conversation",
     title: "Read a conversation",
-    description: "Messages in one conversation, oldest first. Pass a thread URL from get_inbox, or a connection's profile URL or username.",
+    description:
+      "Messages in one conversation, oldest first. Pass a thread URL from get_inbox, or a connection's profile URL or username. " +
+      "Opening a thread marks it as read on LinkedIn, and the other person may see a read receipt.",
     input: { thread_or_profile: z.string(), limit: z.number().int().min(1).max(50).default(20) },
     annotations: READ,
     handler: async (args, ctx) => {

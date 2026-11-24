@@ -1,0 +1,74 @@
+[
+  {
+    "urn": "urn:li:ugcPost:7262000000000000010",
+    "depth": 0,
+    "text": "Northwind Labs\nNorthwind Labs\n12,400 followers\n4d • Edited • \nWe're hiring in Lisbon! Five engineering roles are open.\n…more\n356\n41 comments\n22 reposts\nLike\nComment\nRepost\nSend",
+    "links": [
+      { "href": "https://www.linkedin.com/company/northwind-labs/posts/", "text": "Northwind Labs", "label": null },
+      { "href": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7262000000000000010/", "text": "4d", "label": null }
+    ],
+    "labels": ["356 reactions", "41 comments on Northwind Labs’s post", "22 reposts of Northwind Labs’s post"],
+    "fields": {
+      "actorName": "Northwind Labs",
+      "actorHeadline": "12,400 followers",
+      "actorTime": "4d • Edited • ",
+      "header": null,
+      "text": "We're hiring in Lisbon! Five engineering roles are open.\n…more",
+      "reactions": "356",
+      "comments": "41 comments",
+      "reposts": "22 reposts",
+      "impressions": null
+    },
+    "attrs": {
+      "actorLink": "https://www.linkedin.com/company/northwind-labs/",
+      "postLink": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7262000000000000010/",
+      "selfUrn": "urn:li:ugcPost:7262000000000000010",
+      "selfId": null
+    },
+    "items": []
+  },
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "",
+    "links": [],
+    "labels": [],
+    "fields": {},
+    "attrs": { "actorLink": null, "postLink": null, "selfUrn": null, "selfId": null },
+    "items": []
+  },
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Northwind Labs\n12,400 followers\n1w • \nOur Q3 product update is live.\n1.2K\n64 comments\n31 reposts",
+    "links": [{ "href": "https://www.linkedin.com/company/northwind-labs/", "text": "Northwind Labs", "label": null }],
+    "labels": ["1.2K reactions", "64 comments on Northwind Labs’s post", "31 reposts of Northwind Labs’s post"],
+    "fields": {},
+    "attrs": {
+      "actorLink": null,
+      "postLink": "https://www.linkedin.com/posts/northwind-labs_launch-ugcPost-7261900000000000011-xY9z?utm_source=share",
+      "selfUrn": null,
+      "selfId": null
+    },
+    "items": []
+  },
+  {
+    "urn": "urn:li:activity:7261800000000000012",
+    "depth": 0,
+    "text": "Northwind Labs reposted this\nAlex Rivera\nFounder at Northwind Labs\n1w • \nProud of this team.\n90\n3 comments",
+    "links": [
+      { "href": "https://www.linkedin.com/company/northwind-labs/", "text": "Northwind Labs", "label": null },
+      { "href": "https://www.linkedin.com/in/alex-rivera-0001/", "text": "Alex Rivera", "label": null }
+    ],
+    "labels": ["90 reactions", "3 comments on Alex Rivera’s post"],
+    "fields": {
+      "header": "Northwind Labs reposted this",
+      "actorName": "Alex Rivera",
+      "actorHeadline": "Founder at Northwind Labs",
+      "actorTime": "1w • ",
+      "text": "Proud of this team."
+    },
+    "attrs": { "actorLink": "https://www.linkedin.com/in/alex-rivera-0001/", "postLink": null, "selfUrn": "urn:li:activity:7261800000000000012", "selfId": null },
+    "items": []
+  }
+]

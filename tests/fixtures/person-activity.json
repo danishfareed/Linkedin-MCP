@@ -1,0 +1,90 @@
+[
+  {
+    "urn": "urn:li:activity:7261000000000000001",
+    "depth": 0,
+    "text": "Jane Doe\nJane Doe\n • You\nVP Engineering at Northwind Labs\n3d • \nWe just open-sourced our internal feature-flag service.\n\nIt took two years to get here.\n…more\n412\n38 comments\n9 reposts\nLike\nComment\nRepost\nSend",
+    "links": [
+      { "href": "https://www.linkedin.com/in/jane-doe-0042?miniProfileUrn=urn%3Ali%3Afs_miniProfile%3AXYZ", "text": "Jane Doe", "label": null },
+      { "href": "https://www.linkedin.com/feed/update/urn:li:activity:7261000000000000001/", "text": "3d", "label": null }
+    ],
+    "labels": ["412 reactions", "38 comments on Jane Doe’s post", "9 reposts of Jane Doe’s post"],
+    "fields": {
+      "actorName": "Jane Doe",
+      "actorHeadline": "VP Engineering at Northwind Labs",
+      "actorTime": "3d • ",
+      "header": null,
+      "text": "We just open-sourced our internal feature-flag service.\n\nIt took two years to get here.\n…more",
+      "reactions": "412",
+      "comments": "38 comments",
+      "reposts": "9 reposts",
+      "impressions": null
+    },
+    "attrs": {
+      "actorLink": "https://www.linkedin.com/in/jane-doe-0042?miniProfileUrn=x",
+      "postLink": "https://www.linkedin.com/feed/update/urn:li:activity:7261000000000000001/",
+      "selfUrn": "urn:li:activity:7261000000000000001",
+      "selfId": null
+    },
+    "items": []
+  },
+  {
+    "urn": "urn:li:activity:7259000000000000777",
+    "depth": 0,
+    "text": "Jane Doe reposted this\nSam Okafor\nSam Okafor\n • 2nd\nFounder at Bluebird\n1w • \nHiring is a product problem, not a process problem.\n1,024\n77 comments\n15 reposts\nLike\nComment\nRepost\nSend",
+    "links": [
+      { "href": "https://www.linkedin.com/in/jane-doe-0042/", "text": "Jane Doe", "label": null },
+      { "href": "https://www.linkedin.com/feed/update/urn:li:share:7261000000000000002/", "text": "1w", "label": null },
+      { "href": "https://www.linkedin.com/in/sam-okafor-0007/", "text": "Sam Okafor", "label": null },
+      { "href": "https://www.linkedin.com/feed/update/urn:li:activity:7259000000000000777/", "text": "", "label": null }
+    ],
+    "labels": ["1,024 reactions", "77 comments on Sam Okafor’s post", "15 reposts of Sam Okafor’s post"],
+    "fields": {},
+    "attrs": {
+      "actorLink": null,
+      "postLink": "https://www.linkedin.com/feed/update/urn:li:share:7261000000000000002/",
+      "selfUrn": null,
+      "selfId": null
+    },
+    "items": []
+  },
+  {
+    "urn": "urn:li:activity:7258000000000000555",
+    "depth": 0,
+    "text": "Jane Doe commented on this\nPriya Natarajan\nHead of Design at Bluebird\n2w • \nDesign systems are a team sport.\n88\n12 comments",
+    "links": [{ "href": "https://www.linkedin.com/in/priya-n-0002/", "text": "Priya Natarajan", "label": null }],
+    "labels": ["88 reactions", "12 comments on Priya Natarajan’s post"],
+    "fields": {
+      "header": "Jane Doe commented on this",
+      "actorName": "Priya Natarajan",
+      "actorHeadline": "Head of Design at Bluebird",
+      "actorTime": "2w • ",
+      "text": "Design systems are a team sport."
+    },
+    "attrs": { "actorLink": "https://www.linkedin.com/in/priya-n-0002/", "postLink": null, "selfUrn": "urn:li:activity:7258000000000000555", "selfId": null },
+    "items": []
+  },
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Jane Doe\nJane Doe\n • You\nVP Engineering at Northwind Labs\n2w • \nFollow-up to my last post: here is the migration plan.\n230\n19 comments\n4 reposts",
+    "links": [
+      { "href": "https://www.linkedin.com/in/jane-doe-0042/", "text": "Jane Doe", "label": null },
+      { "href": "https://www.linkedin.com/feed/update/urn:li:activity:7261000000000000001/", "text": "my last post", "label": null },
+      { "href": "https://www.linkedin.com/feed/update/urn:li:activity:7260500000000000004/", "text": "2w •", "label": null }
+    ],
+    "labels": ["230 reactions", "19 comments on Jane Doe’s post", "4 reposts of Jane Doe’s post"],
+    "fields": {},
+    "attrs": { "actorLink": null, "postLink": null, "selfUrn": null, "selfId": null },
+    "items": []
+  },
+  {
+    "urn": "urn:li:activity:7261000000000000001",
+    "depth": 0,
+    "text": "Jane Doe\nWe just open-sourced our internal feature-flag service.",
+    "links": [],
+    "labels": [],
+    "fields": { "actorName": "Jane Doe", "text": "We just open-sourced our internal feature-flag service." },
+    "attrs": { "selfUrn": "urn:li:activity:7261000000000000001", "selfId": null },
+    "items": []
+  }
+]

@@ -58,13 +58,19 @@ describe("MCP server", () => {
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual(
       [
-        "cancel_action", "comment_on_post", "confirm_action", "create_post", "delete_post", "get_audit_log", "get_company_profile",
-        "get_conversation", "get_feed", "get_inbox", "get_limits", "get_my_posts", "get_my_profile", "get_notifications",
-        "get_person_profile", "get_post_analytics", "get_post_comments", "get_profile_analytics", "list_invitations",
-        "list_scheduled_posts", "pause", "react_to_post", "reply_to_comment", "respond_to_invitation", "resume", "schedule_post",
-        "search_companies", "search_people", "search_posts", "send_connection_request", "send_message", "session_status", "set_limits",
+        "cancel_action", "comment_on_post", "confirm_action", "create_post", "delete_post", "get_audit_log", "get_company_posts",
+        "get_company_profile", "get_conversation", "get_feed", "get_inbox", "get_limits", "get_my_posts",
+        "get_my_profile", "get_notifications", "get_person_posts", "get_person_profile", "get_post_analytics", "get_post_comments",
+        "get_profile_analytics", "list_invitations", "list_scheduled_posts", "pause", "react_to_post",
+        "reply_to_comment", "respond_to_invitation", "resume", "schedule_post", "search_companies", "search_people",
+        "search_posts", "send_connection_request", "send_message", "session_status", "set_limits",
       ].sort(),
     );
+    expect(names).toHaveLength(35);
+    for (const name of ["get_person_posts", "get_company_posts"]) {
+      expect(tools.find((t) => t.name === name)!.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false });
+    }
+    expect(tools.find((t) => t.name === "get_conversation")!.description).toMatch(/marks it as read/);
     for (const name of ["create_post", "schedule_post", "comment_on_post", "reply_to_comment", "send_message", "send_connection_request", "delete_post", "respond_to_invitation"]) {
       const tool = tools.find((t) => t.name === name)!;
       expect(tool.description).toMatch(/call confirm_action only after the user explicitly approves/);
@@ -135,6 +141,37 @@ describe("MCP server", () => {
     expect(badComment.body.error.code).toBe("INVALID_INPUT");
     const missingImage = await call("create_post", { text: "hi", images: [join(tempDir(), "missing.png")] });
     expect(missingImage.body.error.message).toMatch(/File not found/);
+  });
+
+  it("rejects bad read inputs before the browser starts", async () => {
+    const { ctx, browserCalls } = setup();
+    const { call } = await connect(ctx);
+    const cases: [string, Record<string, unknown>, RegExp][] = [
+      ["get_person_profile", { profile: "not a profile" }, /not a LinkedIn profile/],
+      ["get_person_posts", { profile: "../../etc" }, /not a LinkedIn profile/],
+      ["get_company_profile", { company: "acme corp!" }, /not a LinkedIn company/],
+      ["get_company_posts", { company: "https://www.linkedin.com/company/a b/" }, /not a LinkedIn company/],
+      ["get_post_comments", { post_url: "https://example.com/x" }, /not a LinkedIn post URL/],
+      ["get_post_analytics", { post_url: "nope" }, /not a LinkedIn post URL/],
+      ["search_posts", { keywords: "  " }, /keywords/],
+    ];
+    for (const [name, args, message] of cases) {
+      const r = await call(name, args);
+      expect(r.isError, name).toBe(true);
+      expect(r.body.error.code, name).toBe("INVALID_INPUT");
+      expect(r.body.error.message, name).toMatch(message);
+    }
+    expect(browserCalls).toHaveLength(0);
+  });
+
+  it("refuses a capped read before the browser starts", async () => {
+    const { ctx, browserCalls } = setup();
+    const { call } = await connect(ctx);
+    await call("set_limits", { search: 0, profile_view: 0 });
+    expect((await call("search_posts", { keywords: "mcp" })).body.error.code).toBe("LIMIT_REACHED");
+    expect((await call("get_person_posts", { profile: "jane-doe" })).body.error.code).toBe("LIMIT_REACHED");
+    expect((await call("get_company_posts", { company: "northwind-labs" })).body.error.code).toBe("LIMIT_REACHED");
+    expect(browserCalls).toHaveLength(0);
   });
 
   it("refuses writes outside working hours", async () => {

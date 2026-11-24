@@ -64,6 +64,16 @@ export function companyAboutUrl(input: string): string {
   return `${BASE}/company/${encodeURIComponent(companySlug(input))}/about/`;
 }
 
+/** A company's posts tab. */
+export function companyPostsUrl(input: string): string {
+  return `${BASE}/company/${encodeURIComponent(companySlug(input))}/posts/`;
+}
+
+/** A person's recent activity. "all" is the Posts tab (their posts and reposts). */
+export function personActivityUrl(input: string, tab: "all" | "shares" = "all"): string {
+  return `${BASE}/in/${encodeURIComponent(profileId(input))}/recent-activity/${tab}/`;
+}
+
 const THREAD_RE = /linkedin\.com\/messaging\/thread\/([^/?#]+)/i;
 
 export function threadUrl(input: string): string | null {

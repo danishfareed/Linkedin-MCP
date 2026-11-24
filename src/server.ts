@@ -13,6 +13,8 @@ Rules:
 - Daily and weekly caps protect the account. When a tool returns LIMIT_REACHED, tell the user when it resets; do not retry or work around it.
 - If a tool returns CHECKPOINT or CIRCUIT_OPEN, stop. Relay the next_step to the user. Do not retry and do not call resume unless the user says they resolved it.
 - Searches and profile views are capped and return small result sets. Do not loop over them to build lists of people.
+- get_person_posts and get_company_posts read someone's recent posts and count as profile views.
+- List results include complete. When it is false, tell the user the list may be partial and pass on the note.
 - Errors include a next_step field; relay it to the user.`;
 
 export const ALL_TOOLS: ToolDef[] = [
