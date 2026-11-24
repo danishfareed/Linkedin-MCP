@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type AppContext, VERSION } from "./context.js";
 import { contentTools } from "./tools/content.js";
 import { engagementTools } from "./tools/engagement.js";
+import { jobTools } from "./tools/jobs.js";
 import { messagingTools, networkTools, researchTools } from "./tools/people.js";
 import { type ToolDef, registerTools } from "./tools/registry.js";
 import { sessionTools } from "./tools/session.js";
@@ -14,6 +15,7 @@ Rules:
 - If a tool returns CHECKPOINT or CIRCUIT_OPEN, stop. Relay the next_step to the user. Do not retry and do not call resume unless the user says they resolved it.
 - Searches and profile views are capped and return small result sets. Do not loop over them to build lists of people.
 - get_person_posts and get_company_posts read someone's recent posts and count as profile views.
+- search_jobs, get_job_details and get_saved_jobs are read-only. This server never applies to jobs.
 - List results include complete. When it is false, tell the user the list may be partial and pass on the note.
 - Errors include a next_step field; relay it to the user.`;
 
@@ -22,6 +24,7 @@ export const ALL_TOOLS: ToolDef[] = [
   ...contentTools,
   ...engagementTools,
   ...researchTools,
+  ...jobTools,
   ...networkTools,
   ...messagingTools,
 ] as unknown as ToolDef[];

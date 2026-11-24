@@ -1,0 +1,81 @@
+[
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Senior Backend Engineer\nSenior Backend Engineer with verification\nNorthwind Labs\nLisbon, Portugal (Hybrid)\n€70K/yr - €90K/yr\nActively reviewing applicants\n3 days ago\nEasy Apply",
+    "links": [
+      {
+        "href": "https://www.linkedin.com/jobs/view/4012345601/?eBP=CwEAAAGTexample&refId=AbCdEf&trackingId=XyZ123",
+        "text": "Senior Backend Engineer with verification",
+        "label": "Senior Backend Engineer with verification"
+      }
+    ],
+    "labels": ["Senior Backend Engineer with verification", "Dismiss Senior Backend Engineer job"],
+    "fields": {
+      "title": "Senior Backend Engineer",
+      "company": "Northwind Labs",
+      "location": "Lisbon, Portugal (Hybrid)",
+      "posted": "3 days ago",
+      "footer": "Actively reviewing applicants\n3 days ago\nEasy Apply"
+    },
+    "attrs": {
+      "occludableId": "4012345601",
+      "selfJobId": null,
+      "innerJobId": "4012345601",
+      "link": "https://www.linkedin.com/jobs/view/4012345601/?eBP=CwEAAAGTexample&refId=AbCdEf&trackingId=XyZ123"
+    },
+    "items": []
+  },
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Staff Platform Engineer\nStaff Platform Engineer with verification\nContoso Cloud\nRemote\n$180K/yr - $220K/yr · 401(k), Vision, +2 benefits\nBe an early applicant\nReposted 2 weeks ago\nPromoted\nViewed",
+    "links": [
+      {
+        "href": "https://www.linkedin.com/jobs/search/?currentJobId=4012345602&keywords=platform%20engineer",
+        "text": "Staff Platform Engineer with verification",
+        "label": null
+      }
+    ],
+    "labels": ["Dismiss Staff Platform Engineer job"],
+    "fields": {},
+    "attrs": {},
+    "items": []
+  },
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "",
+    "links": [],
+    "labels": [],
+    "fields": { "title": null, "company": null, "location": null, "posted": null, "footer": null },
+    "attrs": { "occludableId": "4012345603", "selfJobId": null, "innerJobId": null, "link": null },
+    "items": []
+  },
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Senior Backend Engineer\nNorthwind Labs\nLisbon, Portugal (Hybrid)",
+    "links": [{ "href": "https://www.linkedin.com/jobs/view/4012345601/", "text": "Senior Backend Engineer", "label": null }],
+    "labels": [],
+    "fields": { "title": "Senior Backend Engineer", "company": "Northwind Labs", "location": "Lisbon, Portugal (Hybrid)" },
+    "attrs": { "occludableId": "4012345601" },
+    "items": []
+  },
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Data Engineer\nTailspin Toys\nBerlin, Germany\n1 week ago",
+    "links": [
+      {
+        "href": "https://www.linkedin.com/jobs/view/data-engineer-at-tailspin-toys-4012345605?position=3&pageNum=0",
+        "text": "Data Engineer",
+        "label": null
+      }
+    ],
+    "labels": [],
+    "fields": { "title": "Data Engineer", "company": "Tailspin Toys", "location": "Berlin, Germany", "posted": "1 week ago" },
+    "attrs": { "link": "https://www.linkedin.com/jobs/view/data-engineer-at-tailspin-toys-4012345605?position=3&pageNum=0" },
+    "items": []
+  }
+]

@@ -637,3 +637,138 @@ export const ACTIVITY_EXTRACT = {
     attrs: OWN_POST_ATTRS,
   } satisfies ExtractSpec,
 } as const;
+
+export const JOB_SEL = {
+  /** The scrollable results column on /jobs/search/. Cards below the fold render only once scrolled into view. */
+  listPane: entry(
+    "jobs.listPane",
+    { css: ".jobs-search-results-list" },
+    { css: ".scaffold-layout__list > div" },
+    { css: ".scaffold-layout__list" },
+  ),
+  nextPage: entry(
+    "jobs.nextPage",
+    { role: "button", name: /^(next|view next page)$/i },
+    { css: "button.artdeco-pagination__button--next" },
+  ),
+};
+
+export const JOB_EXTRACT = {
+  card: {
+    container: [
+      "li[data-occludable-job-id]",
+      "div.job-card-container[data-job-id]",
+      "li.jobs-search-results__list-item",
+      "div[data-job-id]",
+      "main li:has(a[href*='/jobs/view/'])",
+      "div.base-card:has(a[href*='/jobs/view/'])",
+    ],
+    fields: {
+      title: [
+        ".job-card-list__title--link strong",
+        ".job-card-list__title--link",
+        ".job-card-list__title",
+        ".job-card-container__link strong",
+        ".artdeco-entity-lockup__title",
+        ".base-search-card__title",
+      ],
+      company: [
+        ".artdeco-entity-lockup__subtitle",
+        ".job-card-container__primary-description",
+        ".job-card-container__company-name",
+        ".base-search-card__subtitle",
+      ],
+      location: [
+        ".job-card-container__metadata-wrapper li",
+        ".job-card-container__metadata-item",
+        ".artdeco-entity-lockup__caption",
+        ".job-search-card__location",
+      ],
+      posted: ["time", ".job-card-container__listed-time", ".job-search-card__listdate"],
+      footer: [".job-card-container__footer-wrapper", ".job-card-list__footer-wrapper"],
+    },
+    attrs: {
+      occludableId: { css: [":scope"], attr: "data-occludable-job-id" },
+      selfJobId: { css: [":scope"], attr: "data-job-id" },
+      innerJobId: { css: ["[data-job-id]"], attr: "data-job-id" },
+      link: {
+        css: ["a.job-card-container__link", "a.job-card-list__title--link", "a.job-card-list__title", "a.base-card__full-link", "a[href*='/jobs/view/']"],
+        attr: "href",
+      },
+    },
+  } satisfies ExtractSpec,
+
+  saved: {
+    container: [
+      "li.reusable-search__result-container:has(a[href*='/jobs/view/'])",
+      "div.entity-result:has(a[href*='/jobs/view/'])",
+      "div[data-chameleon-result-urn*='jobPosting']",
+      "main li:has(a[href*='/jobs/view/'])",
+    ],
+    fields: {
+      title: [".entity-result__title-text a span[aria-hidden='true']", ".entity-result__title-text a", ".entity-result__title-text"],
+      company: [".entity-result__primary-subtitle"],
+      location: [".entity-result__secondary-subtitle"],
+      posted: [".entity-result__simple-insight-text", ".reusable-search-simple-insight__text", "time"],
+    },
+    attrs: {
+      link: { css: [".entity-result__title-text a", "a[href*='/jobs/view/']"], attr: "href" },
+    },
+  } satisfies ExtractSpec,
+
+  details: {
+    container: ["main"],
+    fields: {
+      title: [
+        ".job-details-jobs-unified-top-card__job-title h1",
+        ".job-details-jobs-unified-top-card__job-title",
+        ".jobs-unified-top-card__job-title",
+        ".top-card-layout__title",
+        "h1",
+      ],
+      company: [
+        ".job-details-jobs-unified-top-card__company-name a",
+        ".job-details-jobs-unified-top-card__company-name",
+        ".jobs-unified-top-card__company-name a",
+        ".jobs-unified-top-card__company-name",
+        ".topcard__org-name-link",
+      ],
+      primary: [
+        ".job-details-jobs-unified-top-card__primary-description-container",
+        ".job-details-jobs-unified-top-card__tertiary-description-container",
+        ".job-details-jobs-unified-top-card__primary-description",
+        ".jobs-unified-top-card__primary-description",
+        ".topcard__flavor-row",
+      ],
+      insights: [
+        ".job-details-preferences-and-skills",
+        ".job-details-fit-level-preferences",
+        ".job-details-jobs-unified-top-card__job-insight",
+        ".jobs-unified-top-card__job-insight",
+        ".description__job-criteria-list",
+      ],
+      salary: ["#SALARY", ".jobs-details__salary-main-rail-card", ".salary-main-rail__data-body", ".compensation__salary"],
+      apply: [".jobs-apply-button--top-card", ".jobs-s-apply", "button.jobs-apply-button", "a.jobs-apply-button"],
+      description: [
+        "#job-details",
+        ".jobs-description__content",
+        ".jobs-description-content__text",
+        ".jobs-box__html-content",
+        ".show-more-less-html__markup",
+        ".description__text",
+      ],
+    },
+    attrs: {
+      companyLink: {
+        css: [".job-details-jobs-unified-top-card__company-name a", ".jobs-unified-top-card__company-name a", ".topcard__org-name-link", "a[href*='/company/']"],
+        attr: "href",
+      },
+      applyLabel: { css: ["button.jobs-apply-button", "a.jobs-apply-button", ".jobs-s-apply button", ".jobs-s-apply a"], attr: "aria-label" },
+      applyLink: { css: ["a.jobs-apply-button[href]", ".jobs-s-apply a[href]", "a[href*='externalApply']", "a.apply-button[href]"], attr: "href" },
+    },
+    limit: 1,
+  } satisfies ExtractSpec,
+
+  /** Present once a job page has rendered enough to read. */
+  detailsReady: ["main h1", "#job-details", ".jobs-description__content", ".jobs-unified-top-card", ".job-details-jobs-unified-top-card__job-title"],
+} as const;

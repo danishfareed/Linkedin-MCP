@@ -1,0 +1,54 @@
+[
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Northwind Labs\nShare\nShow more options\nSenior Backend Engineer\nLisbon, Portugal · Reposted 1 week ago · Over 100 applicants\nPromoted by hirer · Actively reviewing applicants\nHybrid\nMatches your job preferences, workplace type is Hybrid.\nFull-time\nMatches your job preferences, job type is Full-time.\n€70K/yr - €90K/yr\nEasy Apply\nSave\nAbout the job\nWe're hiring a senior backend engineer to own our billing platform.\n\nWhat you'll do\n- Design and run services in TypeScript and Postgres\n- Mentor two engineers\n\nWhat we offer\n- A hybrid setup with two office days\n…more\nSet alert for similar jobs\nAbout the company\nNorthwind Labs\n12,400 followers\nMore jobs\nData Engineer\nTailspin Toys\nRemote\nEasy Apply",
+    "links": [
+      { "href": "https://www.linkedin.com/company/northwind-labs/life/", "text": "Northwind Labs", "label": null },
+      { "href": "https://www.linkedin.com/jobs/view/4012345601/", "text": "Senior Backend Engineer", "label": null },
+      { "href": "https://www.linkedin.com/jobs/view/4012345605/", "text": "Data Engineer", "label": null }
+    ],
+    "labels": ["Easy Apply to Senior Backend Engineer at Northwind Labs", "Save Senior Backend Engineer at Northwind Labs"],
+    "fields": {
+      "title": "Senior Backend Engineer",
+      "company": "Northwind Labs",
+      "primary": "Lisbon, Portugal · Reposted 1 week ago · Over 100 applicants\nPromoted by hirer · Actively reviewing applicants",
+      "insights": "Hybrid\nMatches your job preferences, workplace type is Hybrid.\nFull-time\nMatches your job preferences, job type is Full-time.\n€70K/yr - €90K/yr",
+      "salary": null,
+      "apply": "Easy Apply",
+      "description": "About the job\nWe're hiring a senior backend engineer to own our billing platform.\n\nWhat you'll do\n- Design and run services in TypeScript and Postgres\n- Mentor two engineers\n\nWhat we offer\n- A hybrid setup with two office days\n…more"
+    },
+    "attrs": {
+      "companyLink": "https://www.linkedin.com/company/northwind-labs/life/",
+      "applyLabel": "Easy Apply to Senior Backend Engineer at Northwind Labs",
+      "applyLink": null
+    },
+    "items": []
+  },
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Contoso Cloud\nStaff Platform Engineer\nContoso Cloud · Remote · 2 days ago · 57 applicants\nFull-time · Mid-Senior level\nApply\nSave\nAbout the job\nContoso Cloud builds developer infrastructure.\nYou will lead our Kubernetes platform team.\nShow more\nSet alert for similar jobs\nPeople also viewed\nSite Reliability Engineer\nFabrikam\nEasy Apply",
+    "links": [
+      { "href": "https://www.linkedin.com/company/contoso-cloud/", "text": "Contoso Cloud", "label": null },
+      {
+        "href": "https://www.linkedin.com/jobs/view/externalApply/4012345602?url=https%3A%2F%2Fcareers.contoso.example%2Fjobs%2F123%3Fsource%3Dlinkedin&urlHash=AbCd",
+        "text": "Apply",
+        "label": "Apply to Staff Platform Engineer on company website"
+      },
+      { "href": "https://www.linkedin.com/jobs/view/4012345611/", "text": "Site Reliability Engineer", "label": null }
+    ],
+    "labels": ["Apply to Staff Platform Engineer on company website"],
+    "fields": {
+      "title": "Staff Platform Engineer",
+      "company": null,
+      "primary": null,
+      "insights": null,
+      "salary": null,
+      "apply": null,
+      "description": null
+    },
+    "attrs": { "companyLink": null, "applyLabel": null, "applyLink": null },
+    "items": []
+  }
+]

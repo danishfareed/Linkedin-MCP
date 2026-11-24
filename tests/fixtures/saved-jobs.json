@@ -1,0 +1,32 @@
+[
+  {
+    "urn": "urn:li:fsd_jobPosting:4012345601",
+    "depth": 0,
+    "text": "Senior Backend Engineer\nSenior Backend Engineer\nNorthwind Labs\nLisbon, Portugal (Hybrid)\nPosted 2w ago\nEasy Apply",
+    "links": [{ "href": "https://www.linkedin.com/jobs/view/4012345601/", "text": "Senior Backend Engineer", "label": null }],
+    "labels": [],
+    "fields": { "title": "Senior Backend Engineer", "company": "Northwind Labs", "location": "Lisbon, Portugal (Hybrid)", "posted": "Posted 2w ago" },
+    "attrs": { "link": "https://www.linkedin.com/jobs/view/4012345601/" },
+    "items": []
+  },
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Product Designer\nFabrikam\nPorto, Portugal (On-site)\nApplied 3d ago",
+    "links": [{ "href": "https://www.linkedin.com/jobs/view/4012345607/?trk=saved", "text": "Product Designer", "label": null }],
+    "labels": [],
+    "fields": { "title": "Product Designer", "company": "Fabrikam", "location": "Porto, Portugal (On-site)", "posted": "Applied 3d ago" },
+    "attrs": { "link": "https://www.linkedin.com/jobs/view/4012345607/?trk=saved" },
+    "items": []
+  },
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Growth Marketing Lead\nWoodgrove Bank\nLondon, United Kingdom (Remote)\nNo longer accepting applications",
+    "links": [{ "href": "https://www.linkedin.com/jobs/view/4012345609/", "text": "Growth Marketing Lead", "label": null }],
+    "labels": [],
+    "fields": {},
+    "attrs": {},
+    "items": []
+  }
+]

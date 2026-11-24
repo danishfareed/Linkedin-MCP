@@ -74,6 +74,31 @@ export function personActivityUrl(input: string, tab: "all" | "shares" = "all"):
   return `${BASE}/in/${encodeURIComponent(profileId(input))}/recent-activity/${tab}/`;
 }
 
+const LINKEDIN_URL_RE = /^(?:https?:\/\/)?(?:[a-z0-9-]+\.)*linkedin\.com\//i;
+const JOB_VIEW_RE = /\/jobs\/view\/(?:[^/?#]*?-)?(\d{6,15})(?=[/?#]|$)/i;
+const CURRENT_JOB_RE = /[?&]currentJobId=(\d{6,15})(?=&|#|$)/i;
+const JOB_URN_RE = /urn:li:(?:fsd_)?jobPosting:(\d{6,15})/i;
+
+/** Finds a job id in a job link or job URN. Returns null when there is none. */
+export function jobIdIn(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const m = JOB_VIEW_RE.exec(value) ?? CURRENT_JOB_RE.exec(value) ?? JOB_URN_RE.exec(value);
+  return m ? m[1]! : null;
+}
+
+/** Accepts a job URL (/jobs/view/…, or any jobs page with currentJobId=…), a job URN or a bare numeric id. */
+export function jobId(input: string): string {
+  const s = input.trim();
+  if (/^\d{6,15}$/.test(s)) return s;
+  const id = LINKEDIN_URL_RE.test(s) || /^urn:li:/i.test(s) ? jobIdIn(s) : null;
+  if (id) return id;
+  throw invalidInput(`"${input}" is not a LinkedIn job URL or job id. Use a link like https://www.linkedin.com/jobs/view/1234567890/ or just the number.`);
+}
+
+export function jobUrl(input: string): string {
+  return `${BASE}/jobs/view/${jobId(input)}/`;
+}
+
 const THREAD_RE = /linkedin\.com\/messaging\/thread\/([^/?#]+)/i;
 
 export function threadUrl(input: string): string | null {
@@ -93,6 +118,7 @@ export const urls = {
   invitationsSent: () => `${BASE}/mynetwork/invitation-manager/sent/`,
   dashboard: () => `${BASE}/dashboard/`,
   profileDetails: (id: string, section: string) => `${BASE}/in/${encodeURIComponent(id)}/details/${section}/`,
+  savedJobs: () => `${BASE}/my-items/saved-jobs/`,
 };
 
 export const DATE_POSTED = ["past-24h", "past-week", "past-month"] as const;
@@ -118,6 +144,46 @@ export function searchPostsUrl(keywords: string, opts: PostSearchOptions = {}): 
   if (opts.datePosted) u.searchParams.set("datePosted", JSON.stringify(opts.datePosted));
   if (opts.sort === "latest") u.searchParams.set("sortBy", JSON.stringify("date_posted"));
   if (opts.contentType) u.searchParams.set("contentType", JSON.stringify(opts.contentType));
+  return u.toString();
+}
+
+export const WORKPLACE_TYPES = ["on-site", "remote", "hybrid"] as const;
+export type WorkplaceType = (typeof WORKPLACE_TYPES)[number];
+
+export const EXPERIENCE_LEVELS = ["internship", "entry", "associate", "mid-senior", "director", "executive"] as const;
+export type ExperienceLevel = (typeof EXPERIENCE_LEVELS)[number];
+
+/** LinkedIn's job search filter codes. */
+export const JOB_FILTER_CODES = {
+  datePosted: { "past-24h": "r86400", "past-week": "r604800", "past-month": "r2592000" } satisfies Record<DatePosted, string>,
+  workplace: { "on-site": "1", remote: "2", hybrid: "3" } satisfies Record<WorkplaceType, string>,
+  experience: { internship: "1", entry: "2", associate: "3", "mid-senior": "4", director: "5", executive: "6" } satisfies Record<ExperienceLevel, string>,
+};
+
+export interface JobSearchFilters {
+  keywords: string;
+  location?: string;
+  datePosted?: DatePosted;
+  workplace?: readonly WorkplaceType[];
+  experience?: readonly ExperienceLevel[];
+  easyApplyOnly?: boolean;
+}
+
+function codeList<K extends string>(values: readonly K[] | undefined, codes: Record<K, string>): string | null {
+  if (!values?.length) return null;
+  return [...new Set(values.map((v) => codes[v]))].sort().join(",");
+}
+
+export function searchJobsUrl(f: JobSearchFilters): string {
+  const u = new URL(`${BASE}/jobs/search/`);
+  u.searchParams.set("keywords", f.keywords);
+  if (f.location?.trim()) u.searchParams.set("location", f.location.trim());
+  if (f.datePosted) u.searchParams.set("f_TPR", JOB_FILTER_CODES.datePosted[f.datePosted]);
+  const workplace = codeList(f.workplace, JOB_FILTER_CODES.workplace);
+  if (workplace) u.searchParams.set("f_WT", workplace);
+  const experience = codeList(f.experience, JOB_FILTER_CODES.experience);
+  if (experience) u.searchParams.set("f_E", experience);
+  if (f.easyApplyOnly) u.searchParams.set("f_AL", "true");
   return u.toString();
 }
 
@@ -170,6 +236,8 @@ export function cleanLink(href: string | null | undefined): string | null {
   if (company) return `${BASE}/${company[1]}/${company[2]}/`;
   const thread = /^\/messaging\/thread\/([^/]+)/.exec(u.pathname);
   if (thread) return `${BASE}/messaging/thread/${thread[1]}/`;
+  const job = /^\/jobs\//.test(u.pathname) ? jobIdIn(`${u.pathname}${u.search}`) : null;
+  if (job) return `${BASE}/jobs/view/${job}/`;
   let path = u.pathname;
   try {
     path = decodeURIComponent(path);

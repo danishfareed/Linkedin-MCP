@@ -59,15 +59,15 @@ describe("MCP server", () => {
     expect(names).toEqual(
       [
         "cancel_action", "comment_on_post", "confirm_action", "create_post", "delete_post", "get_audit_log", "get_company_posts",
-        "get_company_profile", "get_conversation", "get_feed", "get_inbox", "get_limits", "get_my_posts",
+        "get_company_profile", "get_conversation", "get_feed", "get_inbox", "get_job_details", "get_limits", "get_my_posts",
         "get_my_profile", "get_notifications", "get_person_posts", "get_person_profile", "get_post_analytics", "get_post_comments",
-        "get_profile_analytics", "list_invitations", "list_scheduled_posts", "pause", "react_to_post",
-        "reply_to_comment", "respond_to_invitation", "resume", "schedule_post", "search_companies", "search_people",
+        "get_profile_analytics", "get_saved_jobs", "list_invitations", "list_scheduled_posts", "pause", "react_to_post",
+        "reply_to_comment", "respond_to_invitation", "resume", "schedule_post", "search_companies", "search_jobs", "search_people",
         "search_posts", "send_connection_request", "send_message", "session_status", "set_limits",
       ].sort(),
     );
-    expect(names).toHaveLength(35);
-    for (const name of ["get_person_posts", "get_company_posts"]) {
+    expect(names).toHaveLength(38);
+    for (const name of ["search_jobs", "get_job_details", "get_saved_jobs", "get_person_posts", "get_company_posts"]) {
       expect(tools.find((t) => t.name === name)!.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false });
     }
     expect(tools.find((t) => t.name === "get_conversation")!.description).toMatch(/marks it as read/);
@@ -151,8 +151,11 @@ describe("MCP server", () => {
       ["get_person_posts", { profile: "../../etc" }, /not a LinkedIn profile/],
       ["get_company_profile", { company: "acme corp!" }, /not a LinkedIn company/],
       ["get_company_posts", { company: "https://www.linkedin.com/company/a b/" }, /not a LinkedIn company/],
+      ["get_job_details", { job: "https://example.com/jobs/view/1234567890/" }, /not a LinkedIn job/],
+      ["get_job_details", { job: "senior engineer" }, /not a LinkedIn job/],
       ["get_post_comments", { post_url: "https://example.com/x" }, /not a LinkedIn post URL/],
       ["get_post_analytics", { post_url: "nope" }, /not a LinkedIn post URL/],
+      ["search_jobs", { keywords: "   " }, /keywords/],
       ["search_posts", { keywords: "  " }, /keywords/],
     ];
     for (const [name, args, message] of cases) {
@@ -161,6 +164,10 @@ describe("MCP server", () => {
       expect(r.body.error.code, name).toBe("INVALID_INPUT");
       expect(r.body.error.message, name).toMatch(message);
     }
+    const tooMany = await call("search_jobs", { keywords: "engineer", limit: 26 });
+    expect(tooMany.isError).toBe(true);
+    const badFilter = await call("search_jobs", { keywords: "engineer", workplace: ["moon"] });
+    expect(badFilter.isError).toBe(true);
     expect(browserCalls).toHaveLength(0);
   });
 
@@ -168,6 +175,7 @@ describe("MCP server", () => {
     const { ctx, browserCalls } = setup();
     const { call } = await connect(ctx);
     await call("set_limits", { search: 0, profile_view: 0 });
+    expect((await call("search_jobs", { keywords: "engineer" })).body.error.code).toBe("LIMIT_REACHED");
     expect((await call("search_posts", { keywords: "mcp" })).body.error.code).toBe("LIMIT_REACHED");
     expect((await call("get_person_posts", { profile: "jane-doe" })).body.error.code).toBe("LIMIT_REACHED");
     expect((await call("get_company_posts", { company: "northwind-labs" })).body.error.code).toBe("LIMIT_REACHED");
