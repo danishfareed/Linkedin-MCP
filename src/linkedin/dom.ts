@@ -149,13 +149,19 @@ export async function waitForAny(page: Page, css: readonly string[], timeout = 1
   }
 }
 
-/** Cheap signals for the guard: URL, title, first few KB of text and whether the signed-in nav exists. */
+/** LinkedIn's "Welcome back" account picker, shown in every language once the session has expired. */
+export const REMEMBER_ME_CSS = "#rememberme-div";
+
+/**
+ * Cheap signals for the guard: URL, title, first few KB of text, whether the
+ * signed-in nav exists and whether the "Welcome back" account picker is shown.
+ */
 export async function readPageSignals(page: Page): Promise<PageSignals> {
   const navCss = SEL.globalNav.candidates.filter((c): c is { css: string } => "css" in c).map((c) => c.css);
   const result = (await page
     .evaluate(
-      `(() => ({ title: document.title, text: (document.body && document.body.innerText || "").slice(0, 6000), hasGlobalNav: !!document.querySelector(${JSON.stringify(navCss.join(", "))}) }))()`,
+      `(() => ({ title: document.title, text: (document.body && document.body.innerText || "").slice(0, 6000), hasGlobalNav: !!document.querySelector(${JSON.stringify(navCss.join(", "))}), rememberMe: !!document.querySelector(${JSON.stringify(REMEMBER_ME_CSS)}) }))()`,
     )
-    .catch(() => ({ title: "", text: "", hasGlobalNav: undefined }))) as { title: string; text: string; hasGlobalNav?: boolean };
+    .catch(() => ({ title: "", text: "", hasGlobalNav: undefined, rememberMe: undefined }))) as { title: string; text: string; hasGlobalNav?: boolean; rememberMe?: boolean };
   return { url: page.url(), ...result };
 }
