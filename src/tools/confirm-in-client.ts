@@ -24,9 +24,12 @@ const ACTION_NAMES: Record<string, string> = {
   send_message: "Send this message",
 };
 
-/** Clients may render links as clickable; show where things go as plain text instead. */
+/**
+ * Clients may render links as clickable. Drop only the scheme so the full
+ * host, path, query and fragment stay visible: what you read is what is sent.
+ */
 function plainLinks(text: string): string {
-  return text.replace(/https?:\/\/(?:www\.)?([^\s?#]+)[^\s]*/g, (_m, rest: string) => rest.replace(/\/$/, ""));
+  return text.replace(/https?:\/\//g, "");
 }
 
 function label(key: string): string {
@@ -34,22 +37,36 @@ function label(key: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-/** Builds the dialog text from a preview: every field, with the message text in full. */
+/** Renders any preview value as text. Nothing is dropped: nested objects and lists are spelled out. */
+function render(value: unknown): string {
+  if (value === null || value === undefined) return "(none)";
+  if (typeof value === "string") return plainLinks(value);
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) return value.length ? value.map((v) => `- ${render(v).replace(/\n/g, "\n  ")}`).join("\n") : "(none)";
+  if (typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>)
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => `${label(k)}: ${render(v)}`)
+      .join(", ");
+  }
+  return plainLinks(String(value));
+}
+
+/**
+ * Builds the dialog text from a preview: the action as the heading, then
+ * every field. Long text and lists get their own block so they read in full.
+ */
 export function confirmationMessage(kind: string, preview: Record<string, unknown> | undefined): string {
-  const lines = [`${ACTION_NAMES[kind] ?? `Run ${kind}`} on LinkedIn?`, ""];
+  const action = typeof preview?.action === "string" ? preview.action : (ACTION_NAMES[kind] ?? `Run ${kind}`);
+  const lines = [`LinkedIn: ${plainLinks(action)}?`, ""];
   const long: string[] = [];
   for (const [key, value] of Object.entries(preview ?? {})) {
-    if (key === "action" || key === "dry_run" || value === null || value === undefined) continue;
-    let text: string;
-    if (typeof value === "string") text = value;
-    else if (typeof value === "number" || typeof value === "boolean") text = String(value);
-    else if (Array.isArray(value) && value.every((v) => typeof v === "string" || typeof v === "number")) text = value.join(", ");
-    else continue;
-    text = plainLinks(text);
-    if (text.length > 80 || text.includes("\n")) long.push(`${label(key)}:\n${text}`);
+    if (key === "action" || key === "dry_run" || value === undefined) continue;
+    const text = render(value);
+    if (Array.isArray(value) || text.length > 80 || text.includes("\n")) long.push(`${label(key)}:\n${text}`);
     else lines.push(`${label(key)}: ${text}`);
   }
-  if (long.length) lines.push("", ...long);
+  if (long.length) lines.push("", ...long.flatMap((block) => [block, ""]));
   return lines.join("\n").trim();
 }
 

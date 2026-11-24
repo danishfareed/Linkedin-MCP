@@ -79,7 +79,7 @@ describe("approval in the AI client", () => {
     expect(done.isError).toBe(false);
     expect(done.body).toMatchObject({ status: "dry_run", approved_in_client: true });
     expect(asked).toHaveLength(1);
-    expect(asked[0]).toMatch(/^Publish this post on LinkedIn\?/);
+    expect(asked[0]).toMatch(/^LinkedIn: Publish a post now\?/);
     expect(asked[0]).toContain("Thanks to everyone who helped.");
   });
 
@@ -110,16 +110,34 @@ describe("approval in the AI client", () => {
     expect(b.asked).toHaveLength(0);
   });
 
-  it("writes the dialog text with plain links and the full message", () => {
+  it("writes the dialog text with the action, full links and the full message", () => {
     const text = confirmationMessage("send_connection_request", {
       action: "Send a connection request",
-      profile_url: "https://www.linkedin.com/in/jane-doe/?trk=x",
+      profile_url: "https://www.linkedin.com/in/jane-doe/?trk=x#top",
       note: "Hi Jane, loved your talk on pricing. Would be great to connect and swap notes on usage-based billing sometime soon.",
     });
-    expect(text).toMatch(/^Send this connection request on LinkedIn\?/);
-    expect(text).toContain("Profile url: linkedin.com/in/jane-doe");
+    expect(text).toMatch(/^LinkedIn: Send a connection request\?/);
+    expect(text).toContain("Profile url: www.linkedin.com/in/jane-doe/?trk=x#top");
     expect(text).not.toMatch(/https?:\/\//);
     expect(text).toContain("Note:\nHi Jane, loved your talk");
+  });
+
+  it("spells out nested fields such as attachments instead of dropping them", () => {
+    const text = confirmationMessage("create_post", {
+      action: "Publish a post now",
+      text: "Deck attached",
+      images: ["/Users/me/a.png", "/Users/me/b.png"],
+      document: { path: "/Users/me/deck.pdf", title: "Five pricing mistakes" },
+      visibility: "anyone",
+    });
+    expect(text).toContain("Images:\n- /Users/me/a.png\n- /Users/me/b.png");
+    expect(text).toContain("Document: Path: /Users/me/deck.pdf, Title: Five pricing mistakes");
+    expect(text).toContain("Visibility: anyone");
+  });
+
+  it("shows the specifics carried in the action line", () => {
+    expect(confirmationMessage("react_to_post", { action: 'React "celebrate" to this post', post_url: "https://www.linkedin.com/feed/update/urn:li:activity:1/" })).toMatch(/^LinkedIn: React "celebrate" to this post\?/);
+    expect(confirmationMessage("respond_to_invitation", { action: "Ignore the invitation from jane-doe" })).toMatch(/^LinkedIn: Ignore the invitation from jane-doe\?/);
   });
 });
 
