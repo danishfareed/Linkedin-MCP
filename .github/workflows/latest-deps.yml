@@ -1,0 +1,27 @@
+name: Newest dependencies
+
+# Users get the versions in npm-shrinkwrap.json. This weekly run tests the
+# newest versions our ranges allow, so an upstream release that would break
+# us shows up here before we refresh the shrinkwrap.
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - run: rm npm-shrinkwrap.json && npm install --no-audit --no-fund
+      - run: npm ls --depth=0
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build && npm run check-package
