@@ -8,6 +8,7 @@ import { type ToolDef, registerTools } from "./tools/registry.js";
 import { batchTools } from "./tools/batch.js";
 import { growthTools } from "./tools/growth.js";
 import { playbookTools } from "./tools/playbook.js";
+import { visualTools } from "./tools/visuals.js";
 import { registerPlaybook } from "./growth/playbook/index.js";
 import { sessionTools } from "./tools/session.js";
 
@@ -26,6 +27,7 @@ Rules:
 - List results include complete. When it is false, tell the user the list may be partial and pass on the note.
 - UNSUPPORTED_LANGUAGE means LinkedIn isn't set to English; sending stops before typing anything. Reads still work.
 - get_playbook (and the linkedin-mcp://playbook resources and growth prompts) holds sourced methods, hooks, psychology and strategy. Use it when planning or writing, and keep its evidence labels when you quote it.
+- generate_image, create_quote_card and create_carousel only create files on this computer; attach them with create_post or schedule_post (images or document). generate_image uses the user's own provider key and may cost money: say which provider and, when known, the cost. Never claim an AI image is a real photo of a real person or event.
 - Growth workspace: growth_profile, growth_strategy, growth_ideas, growth_calendar and review_post stay on this computer; growth_report only reads LinkedIn. Approve a strategy only after the user explicitly says yes. growth_calendar never schedules anything: call schedule_post with a slot's schedule_post_input (or confirm_batch for a reviewed week), then record scheduled_for with growth_calendar update. Run review_post on drafts before showing them, and treat "directional only" findings as hints, not conclusions.
 - Errors include a next_step field; relay it to the user.`;
 
@@ -34,6 +36,7 @@ export const ALL_TOOLS: ToolDef[] = [
   ...batchTools,
   ...growthTools,
   ...playbookTools,
+  ...visualTools,
   ...contentTools,
   ...engagementTools,
   ...researchTools,

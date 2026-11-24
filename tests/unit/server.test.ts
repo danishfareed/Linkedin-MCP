@@ -58,7 +58,7 @@ describe("MCP server", () => {
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual(
       [
-        "batch_status", "cancel_action", "comment_on_post", "confirm_action", "confirm_batch", "connect_linkedin_api", "create_post", "delete_post", "get_audit_log", "get_company_posts",
+        "batch_status", "cancel_action", "comment_on_post", "confirm_action", "confirm_batch", "connect_linkedin_api", "create_carousel", "create_quote_card", "generate_image", "image_providers", "list_media", "create_post", "delete_post", "get_audit_log", "get_company_posts",
         "get_company_profile", "get_conversation", "get_feed", "get_inbox", "get_job_details", "get_limits", "get_my_posts",
         "get_my_profile", "get_notifications", "get_person_posts", "get_person_profile", "get_playbook", "get_post_analytics", "get_post_comments",
         "get_profile_analytics", "growth_calendar", "growth_ideas", "growth_profile", "growth_report", "growth_strategy", "get_saved_jobs", "list_invitations", "list_scheduled_posts", "pause", "react_to_post",
@@ -66,7 +66,7 @@ describe("MCP server", () => {
         "search_posts", "send_connection_request", "send_message", "session_status", "set_limits",
       ].sort(),
     );
-    expect(names).toHaveLength(48);
+    expect(names).toHaveLength(53);
     for (const name of ["search_jobs", "get_job_details", "get_saved_jobs", "get_person_posts", "get_company_posts"]) {
       expect(tools.find((t) => t.name === name)!.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false });
     }
