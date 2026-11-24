@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>linkedin-mcp hero</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  /* The hero is always the dark ink sheet so it reads the same on GitHub's light and dark themes. */
+  .frame {
+    width: 1280px; height: 640px;
+    --ink-bg: #121d36;
+    background:
+      radial-gradient(900px 520px at 88% 30%, rgba(80, 140, 255, 0.20), transparent 70%),
+      var(--ink-bg);
+    color: #eef2f9;
+    border-radius: 0;
+  }
+  .frame.grid-bg {
+    background-image:
+      radial-gradient(900px 520px at 88% 30%, rgba(80, 140, 255, 0.20), transparent 70%),
+      linear-gradient(to right, rgba(120, 170, 255, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(120, 170, 255, 0.07) 1px, transparent 1px);
+    background-size: auto, 32px 32px, 32px 32px;
+    background-color: var(--ink-bg);
+  }
+  .crop { border-color: rgba(140, 185, 255, 0.55); }
+  .crop.tl, .crop.tr { top: 26px; } .crop.bl, .crop.br { bottom: 26px; }
+  .crop.tl, .crop.bl { left: 26px; } .crop.tr, .crop.br { right: 26px; }
+
+  .left { position: absolute; left: 88px; top: 82px; width: 610px; }
+  .wordmark { font-family: var(--mono); font-size: 21px; font-weight: 500; color: #a9c6ff; letter-spacing: -0.01em; }
+  .wordmark b { color: #ffffff; font-weight: 600; }
+  h1 {
+    margin-top: 40px;
+    font-size: 70px; line-height: 1.0; font-weight: 800; letter-spacing: -0.035em;
+    color: #ffffff;
+  }
+  h1 span { display: block; }
+  h1 .dim { color: #8ea6cf; }
+  .sub { margin-top: 30px; font-size: 22px; line-height: 1.42; color: #c3cfe4; max-width: 540px; font-weight: 400; }
+  .cmd {
+    margin-top: 36px; display: inline-flex; align-items: center; gap: 14px;
+    font-family: var(--mono); font-size: 18px; color: #e9f0ff;
+    padding: 14px 20px; border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(160, 195, 255, 0.22);
+  }
+  .cmd i { font-style: normal; color: #6f8fc5; }
+
+  /* Right: the proof slip. */
+  .right { position: absolute; right: 86px; top: 88px; width: 452px; height: 480px; }
+  .ask {
+    position: absolute; right: 0; top: 0; max-width: 330px;
+    background: #2a5bd7; color: #fff; font-size: 18px; line-height: 1.38;
+    padding: 13px 18px; border-radius: 18px 18px 4px 18px;
+    box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  }
+  .slip {
+    position: absolute; left: 0; top: 110px; width: 440px;
+    background: #ffffff; color: #14213d; border-radius: 6px;
+    padding: 24px 26px 22px;
+    box-shadow: 0 30px 60px -24px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.4);
+    transform: rotate(-1.6deg);
+  }
+  .slip::before, .slip::after { content: ""; position: absolute; width: 16px; height: 16px; border: 0 solid #9db8e6; }
+  .slip::before { top: -10px; left: -10px; border-top-width: 1.5px; border-left-width: 1.5px; }
+  .slip::after { bottom: -10px; right: -10px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+  .slip-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 14px; border-bottom: 1px dashed #c9d4e6; }
+  .tool { font-family: var(--mono); font-size: 15px; font-weight: 600; color: #1f5fd6; }
+  .when { font-size: 15px; color: #4a5670; font-weight: 500; }
+  .post { margin-top: 16px; font-family: var(--serif); font-size: 19px; line-height: 1.45; color: #1b2742; }
+  .post p + p { margin-top: 10px; }
+  .slip-foot { margin-top: 22px; height: 40px; display: flex; align-items: flex-end; font-size: 14.5px; color: #4f5b72; }
+
+  .stamp {
+    position: absolute; right: 26px; bottom: 16px;
+    transform: rotate(-9deg);
+    border: 3px solid #1e8e4f; color: #1e8e4f; border-radius: 10px;
+    padding: 8px 16px 7px; text-align: center;
+    background: rgba(30, 142, 79, 0.06);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9), inset 0 0 0 4px rgba(30, 142, 79, 0.55);
+  }
+  .stamp b { display: block; font-size: 26px; font-weight: 800; letter-spacing: 0.08em; }
+  .stamp small { display: block; font-size: 12.5px; font-weight: 600; letter-spacing: 0.02em; margin-top: 1px; }
+</style>
+</head>
+<body>
+<div class="frame grid-bg" id="shot">
+  <div class="crop tl"></div><div class="crop tr"></div><div class="crop bl"></div><div class="crop br"></div>
+
+  <div class="left">
+    <div class="wordmark"><b>linkedin</b>-mcp</div>
+    <h1>
+      <span>Your AI drafts it.</span>
+      <span>You approve it.</span>
+      <span class="dim">Then it posts.</span>
+    </h1>
+    <p class="sub">A free, open-source MCP server that runs your own LinkedIn from Claude, Cursor or any AI agent. Posts, scheduling, analytics, comments and messages.</p>
+    <div class="cmd"><i>$</i>npx @danishfareed/linkedin-mcp login</div>
+  </div>
+
+  <div class="right">
+    <div class="ask">Turn my notes into a post and schedule it for Tuesday at 9.</div>
+    <div class="slip">
+      <div class="slip-head">
+        <span class="tool">schedule_post</span>
+        <span class="when">Tue 2 Dec, 09:00</span>
+      </div>
+      <div class="post">
+        <p>We raised prices last spring and lost three customers. We also doubled revenue.</p>
+        <p>Five pricing mistakes I'd undo, and the one I'd make again&hellip;</p>
+      </div>
+      <div class="slip-foot">
+        <span>Visible to anyone</span>
+      </div>
+      <div class="stamp"><b>APPROVED</b><small>by you, 14:02</small></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

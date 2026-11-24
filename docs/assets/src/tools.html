@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>linkedin-mcp tools</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .frame { width: 1240px; padding: 50px 56px 54px; }
+
+  .legend { display: flex; gap: 34px; font-size: 16.5px; color: var(--muted); padding-bottom: 26px; border-bottom: 1px solid var(--rule); }
+  .legend span { display: inline-flex; align-items: center; gap: 10px; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 48px; margin-top: 32px; }
+  .group + .group { margin-top: 34px; }
+  .group h3 { font-size: 22px; font-weight: 700; letter-spacing: -0.015em; }
+  .group h3 small { font-size: 16px; font-weight: 500; color: var(--muted); margin-left: 6px; }
+  .group p { margin-top: 4px; font-size: 16px; color: var(--muted); line-height: 1.4; }
+  ul { list-style: none; margin-top: 14px; }
+  li {
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--mono); font-size: 17px; line-height: 1; padding: 8px 0;
+    letter-spacing: -0.015em;
+  }
+
+  /* Markers mirror the tool annotations in src/tools/registry.ts. */
+  .m { flex: none; width: 12px; height: 12px; display: inline-block; }
+  .send { border-radius: 50%; background: var(--blue); }
+  .read { border-radius: 50%; border: 2px solid var(--blue); }
+  .local { transform: rotate(45deg) scale(0.82); border: 2px solid var(--muted); }
+  .go { border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+  li.key { color: var(--green); font-weight: 600; }
+
+  .note {
+    margin-top: 34px; padding: 18px 20px; border-radius: 12px;
+    background: var(--sheet); border: 1px solid var(--rule);
+    font-size: 16px; line-height: 1.5; color: var(--muted);
+  }
+  .note b { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="frame grid-bg" id="shot">
+  <div class="legend">
+    <span><i class="m send"></i>Sends something. Returns a preview you approve first.</span>
+    <span><i class="m read"></i>Reads from LinkedIn</span>
+    <span><i class="m local"></i>Stays on your computer</span>
+  </div>
+
+  <div class="cols">
+    <div>
+      <div class="group">
+        <h3>Posting and analytics<small>7</small></h3>
+        <ul>
+          <li><i class="m send"></i>create_post</li>
+          <li><i class="m send"></i>schedule_post</li>
+          <li><i class="m read"></i>list_scheduled_posts</li>
+          <li><i class="m send"></i>delete_post</li>
+          <li><i class="m read"></i>get_my_posts</li>
+          <li><i class="m read"></i>get_post_analytics</li>
+          <li><i class="m read"></i>get_profile_analytics</li>
+        </ul>
+      </div>
+      <div class="group">
+        <h3>Research<small>5</small></h3>
+        <ul>
+          <li><i class="m read"></i>get_person_profile</li>
+          <li><i class="m read"></i>get_my_profile</li>
+          <li><i class="m read"></i>get_company_profile</li>
+          <li><i class="m read"></i>search_people</li>
+          <li><i class="m read"></i>search_companies</li>
+        </ul>
+      </div>
+    </div>
+
+    <div>
+      <div class="group">
+        <h3>Engagement<small>7</small></h3>
+        <ul>
+          <li><i class="m read"></i>get_feed</li>
+          <li><i class="m read"></i>search_posts</li>
+          <li><i class="m read"></i>get_post_comments</li>
+          <li><i class="m send"></i>react_to_post</li>
+          <li><i class="m send"></i>comment_on_post</li>
+          <li><i class="m send"></i>reply_to_comment</li>
+          <li><i class="m read"></i>get_notifications</li>
+        </ul>
+      </div>
+      <div class="group">
+        <h3>Network and messages<small>6</small></h3>
+        <ul>
+          <li><i class="m send"></i>send_connection_request</li>
+          <li><i class="m read"></i>list_invitations</li>
+          <li><i class="m send"></i>respond_to_invitation</li>
+          <li><i class="m read"></i>get_inbox</li>
+          <li><i class="m read"></i>get_conversation</li>
+          <li><i class="m send"></i>send_message</li>
+        </ul>
+      </div>
+    </div>
+
+    <div>
+      <div class="group">
+        <h3>Session and safety<small>8</small></h3>
+        <ul>
+          <li class="key"><i class="m go"></i>confirm_action</li>
+          <li><i class="m local"></i>cancel_action</li>
+          <li><i class="m local"></i>session_status</li>
+          <li><i class="m local"></i>get_limits</li>
+          <li><i class="m local"></i>set_limits</li>
+          <li><i class="m local"></i>get_audit_log</li>
+          <li><i class="m local"></i>pause</li>
+          <li><i class="m local"></i>resume</li>
+        </ul>
+      </div>
+      <div class="note"><b class="mono">confirm_action</b> is the only way anything gets sent. It takes the single-use token from a preview, after you say yes.</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

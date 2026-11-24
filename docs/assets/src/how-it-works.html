@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>How linkedin-mcp works</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .frame { width: 1240px; padding: 56px 56px 52px; }
+
+  /* Top: where things run. */
+  .chain { position: relative; display: grid; grid-template-columns: 1fr 1fr 1fr 250px; align-items: start; }
+  .computer {
+    position: absolute; left: -24px; top: -26px; bottom: -22px; right: 250px;
+    border: 1.5px dashed color-mix(in srgb, var(--blue) 55%, transparent); border-radius: 16px;
+  }
+  .computer span {
+    position: absolute; top: -12px; left: 22px; padding: 0 10px;
+    background: var(--paper); color: var(--blue-text); font-size: 16px; font-weight: 600;
+  }
+  .station { position: relative; padding-top: 8px; }
+  .glyph {
+    width: 64px; height: 64px; border-radius: 16px; display: grid; place-items: center;
+    background: var(--sheet); box-shadow: var(--shadow); border: 1px solid var(--rule);
+    position: relative; z-index: 1;
+  }
+  .glyph svg { width: 32px; height: 32px; stroke: var(--ink); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .station.us .glyph { background: var(--blue); border-color: var(--blue); }
+  .station.us .glyph svg { stroke: var(--on-blue); }
+  .station.last { padding-left: 46px; }
+  .station.cross .wire { right: -40px; }
+  .station h3 { margin-top: 18px; font-size: 23px; font-weight: 700; letter-spacing: -0.015em; }
+  .station h3.mono { font-family: var(--mono); font-size: 21px; font-weight: 600; letter-spacing: -0.02em; }
+  .station p { margin-top: 6px; font-size: 17px; line-height: 1.42; color: var(--muted); max-width: 250px; }
+
+  /* Connector between stations: a line from glyph to glyph with a label above. */
+  .station .wire { position: absolute; top: 40px; left: 76px; right: 12px; height: 0; border-top: 2px solid color-mix(in srgb, var(--blue) 70%, transparent); }
+  .station .wire::after {
+    content: ""; position: absolute; right: -2px; top: -7px;
+    border: 6px solid transparent; border-left: 9px solid color-mix(in srgb, var(--blue) 70%, transparent); border-right-width: 0;
+  }
+  .station .wire em {
+    position: absolute; left: 12px; right: 12px; bottom: 8px; font-style: normal; text-align: center;
+    font-size: 15px; font-weight: 600; color: var(--blue-text);
+  }
+  .station.last .wire { display: none; }
+
+  /* Bottom: the route every send takes. */
+  .route { margin-top: 74px; }
+  .route h4 { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+  .route h4 small { font-weight: 400; color: var(--muted); font-size: 17px; margin-left: 8px; }
+  .steps { margin-top: 26px; display: grid; grid-template-columns: repeat(6, 1fr); position: relative; }
+  .steps::before { content: ""; position: absolute; left: 18px; right: 170px; top: 17px; border-top: 2px solid var(--rule); }
+  .step { position: relative; padding-right: 18px; }
+  .num {
+    width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--sheet); border: 2px solid var(--blue); color: var(--blue);
+    font-weight: 700; font-size: 16px; position: relative; z-index: 1;
+  }
+  .step.you .num { background: var(--green); border-color: var(--green); color: var(--on-blue); }
+  .step h5 { margin-top: 16px; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+  .step p { margin-top: 6px; font-size: 15.5px; line-height: 1.42; color: var(--muted); }
+  .step.you h5 { color: var(--green); }
+</style>
+</head>
+<body>
+<div class="frame grid-bg" id="shot">
+  <div class="chain">
+    <div class="computer"><span>Your computer</span></div>
+
+    <div class="station">
+      <div class="glyph"><svg viewBox="0 0 24 24"><path d="M4 5.5h16v10H9l-5 4v-14z"/><path d="M8 9.5h8M8 12.5h5"/></svg></div>
+      <div class="wire"><em>MCP</em></div>
+      <h3>Your AI client</h3>
+      <p>Claude, Cursor, VS Code, ChatGPT desktop or any MCP client.</p>
+    </div>
+
+    <div class="station us">
+      <div class="glyph"><svg viewBox="0 0 24 24"><path d="M6 3.5h9l3.5 3.5v13.5H6z"/><path d="M9 10h6M9 13h6M9 16h3.5"/><path d="M15 3.5V7h3.5"/></svg></div>
+      <div class="wire"><em>drives</em></div>
+      <h3 class="mono">linkedin-mcp</h3>
+      <p>33 tools, with previews, caps and a guard on every action.</p>
+    </div>
+
+    <div class="station cross">
+      <div class="glyph"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M3 9h18"/><circle cx="6.3" cy="6.8" r=".5"/><circle cx="8.6" cy="6.8" r=".5"/></svg></div>
+      <div class="wire"><em>your session</em></div>
+      <h3>Chrome</h3>
+      <p>A real browser profile you signed in to yourself.</p>
+    </div>
+
+    <div class="station last">
+      <div class="glyph"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 3.8 5.2 3.8 8.5s-1.2 6.1-3.8 8.5c-2.6-2.4-3.8-5.2-3.8-8.5s1.2-6.1 3.8-8.5z"/></svg></div>
+      <h3>LinkedIn</h3>
+      <p>Sees one person, using their own account.</p>
+    </div>
+  </div>
+
+  <div class="route">
+    <h4>Every post, comment, reaction, message or invitation<small>takes the same route</small></h4>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><h5>Preview</h5><p>The assistant shows you exactly what will be sent, and where.</p></div>
+      <div class="step you"><div class="num">2</div><h5>You approve</h5><p>A single-use token, bound to that exact preview.</p></div>
+      <div class="step"><div class="num">3</div><h5>Checks</h5><p>Not paused, inside working hours, under today's caps.</p></div>
+      <div class="step"><div class="num">4</div><h5>Human pace</h5><p>One action at a time, with natural gaps and typing.</p></div>
+      <div class="step"><div class="num">5</div><h5>Guard</h5><p>Every page is checked. A security check pauses everything.</p></div>
+      <div class="step"><div class="num">6</div><h5>Audit log</h5><p>Recorded on your computer, without the text itself.</p></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

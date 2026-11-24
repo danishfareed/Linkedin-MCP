@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>linkedin-mcp demo</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  /* Always the dark ink sheet, like the hero. Rendered frame by frame via window.demo.seek(t). */
+  .frame {
+    width: 960px; height: 600px; border-radius: 0;
+    background-color: #0f1a33;
+    background-image:
+      radial-gradient(700px 400px at 85% 10%, rgba(80, 140, 255, 0.16), transparent 70%),
+      linear-gradient(to right, rgba(120, 170, 255, 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(120, 170, 255, 0.06) 1px, transparent 1px);
+    background-size: auto, 32px 32px, 32px 32px;
+    padding: 28px 36px;
+    color: #e3e9f5;
+  }
+  .window {
+    height: 100%; border-radius: 16px; overflow: hidden;
+    background: #121d38; border: 1px solid #27375c;
+    box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.8);
+    display: grid; grid-template-rows: 50px 1fr 74px;
+  }
+  .bar { display: flex; align-items: center; justify-content: space-between; padding: 0 22px; border-bottom: 1px solid #22314f; }
+  .bar .title { font-size: 15px; font-weight: 600; color: #c8d3e8; }
+  .bar .server { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 13.5px; color: #9fb1d1; }
+  .bar .server i { width: 8px; height: 8px; border-radius: 50%; background: #45c983; box-shadow: 0 0 0 3px rgba(69, 201, 131, 0.18); }
+
+  .chat { position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 64px 8px; }
+  .item { overflow: hidden; flex: none; }
+  .item > .inner { padding-top: 14px; }
+
+  .user { display: flex; justify-content: flex-end; }
+  .user span { max-width: 520px; background: #2a5bd7; color: #fff; font-size: 16.5px; line-height: 1.4; padding: 11px 16px; border-radius: 16px 16px 4px 16px; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 14px; color: #9fb1d1;
+    padding: 7px 12px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); border: 1px solid #2a3a5f;
+  }
+  .chip b { color: #a9c8ff; font-weight: 600; }
+  .chip .dots { display: inline-flex; gap: 4px; }
+  .chip .dots i { width: 5px; height: 5px; border-radius: 50%; background: #a9c8ff; }
+  .chip .done { color: #45c983; font-family: var(--sans); font-weight: 700; font-size: 15px; display: none; }
+  .chip.finished .dots { display: none; }
+  .chip.finished .done { display: inline; }
+
+  .say { font-size: 16.5px; line-height: 1.5; color: #dfe6f3; max-width: 640px; }
+  .say .ok { color: #45c983; font-weight: 700; margin-right: 6px; }
+
+  .card {
+    position: relative; width: 560px; margin: 2px 0 2px 2px;
+    background: #fff; color: #14213d; border-radius: 6px; padding: 18px 22px 16px;
+    box-shadow: 0 18px 40px -20px rgba(0, 0, 0, 0.75);
+  }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 11px; border-bottom: 1px dashed #c9d4e6; }
+  .card-head .tool { font-family: var(--mono); font-size: 14px; font-weight: 600; color: #1f5fd6; }
+  .card-head .when { font-size: 14px; font-weight: 500; color: #46526b; }
+  .card .post { margin-top: 12px; font-family: var(--serif); font-size: 17px; line-height: 1.45; color: #1b2742; }
+  .card .post p + p { margin-top: 7px; }
+  .card-foot { margin-top: 10px; min-height: 40px; display: flex; align-items: flex-end; justify-content: space-between; font-size: 13.5px; color: #4f5b72; }
+  .card-foot .mono { font-size: 12.5px; }
+  .stamp {
+    position: absolute; right: 24px; bottom: 9px; transform-origin: center;
+    border: 3px solid #1e8e4f; color: #1e8e4f; border-radius: 9px; padding: 6px 13px 5px; text-align: center;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px rgba(30, 142, 79, 0.55);
+    opacity: 0;
+  }
+  .stamp b { display: block; font-size: 21px; font-weight: 800; letter-spacing: 0.08em; }
+  .stamp small { display: block; font-size: 11.5px; font-weight: 600; }
+
+  .input { display: flex; align-items: center; margin: 0 22px 18px; padding: 0 16px; height: 50px; border-radius: 12px; background: #0f1830; border: 1px solid #2a3a5f; }
+  .input .text { font-size: 16px; color: #e3e9f5; white-space: nowrap; overflow: hidden; }
+  .input .placeholder { font-size: 16px; color: #7d8fb1; }
+  .input .caret { display: inline-block; width: 2px; height: 20px; background: #a9c8ff; margin: 0 2px 0 1px; vertical-align: -4px; }
+</style>
+</head>
+<body>
+<div class="frame" id="shot">
+  <div class="window">
+    <div class="bar">
+      <span class="title">Your AI client</span>
+      <span class="server"><i></i>linkedin-mcp connected</span>
+    </div>
+
+    <div class="chat" id="chat">
+      <div class="item" data-at="2200"><div class="inner user"><span>Turn my notes into a post and schedule it for Tuesday at 9am.</span></div></div>
+      <div class="item" data-at="2700"><div class="inner"><span class="chip" id="chip1"><span>linkedin</span><b>schedule_post</b><span class="dots"><i></i><i></i><i></i></span><span class="done">&#10003;</span></span></div></div>
+      <div class="item" data-at="3500" data-dur="450"><div class="inner">
+        <div class="card">
+          <div class="card-head"><span class="tool">schedule_post</span><span class="when">Tue 2 Dec, 09:00</span></div>
+          <div class="post">
+            <p>We raised prices last spring and lost three customers. We also doubled revenue.</p>
+            <p>Five pricing mistakes I'd undo, and the one I'd make again&hellip;</p>
+          </div>
+          <div class="card-foot"><span>Visible to anyone</span><span class="mono" id="expiry">token expires in 10 min</span></div>
+          <div class="stamp" id="stamp"><b>APPROVED</b><small>by you, 14:02</small></div>
+        </div>
+      </div></div>
+      <div class="item" data-at="4100"><div class="inner say">Here's the preview. Nothing is sent until you approve it.</div></div>
+      <div class="item" data-at="7700"><div class="inner user"><span>Looks good. Schedule it.</span></div></div>
+      <div class="item" data-at="8100"><div class="inner"><span class="chip" id="chip2"><span>linkedin</span><b>confirm_action</b><span class="dots"><i></i><i></i><i></i></span><span class="done">&#10003;</span></span></div></div>
+      <div class="item" data-at="9500"><div class="inner say"><span class="ok">&#10003;</span>Scheduled for Tuesday 2 December at 09:00. LinkedIn publishes it, even if your computer is off.</div></div>
+    </div>
+
+    <div class="input"><span class="text" id="typed"></span><span class="caret" id="caret"></span><span class="placeholder" id="ph">Message your assistant</span></div>
+  </div>
+</div>
+
+<script>
+  const TYPING = [
+    { from: 500, to: 2050, text: "Turn my notes into a post and schedule it for Tuesday at 9am." },
+    { from: 6700, to: 7550, text: "Looks good. Schedule it." },
+  ];
+  const CHIPS = [
+    { el: "chip1", done: 3500 },
+    { el: "chip2", done: 8900 },
+  ];
+  const STAMP_AT = 8900;
+  const END = 13500;
+  const FPS = 15;
+
+  const items = [...document.querySelectorAll("#chat .item")];
+  // Measured on the first seek, after web fonts have loaded, so heights are exact.
+  let heights = null;
+  const clamp = (x) => Math.max(0, Math.min(1, x));
+  const ease = (p) => 1 - Math.pow(1 - p, 3);
+
+  function seek(t) {
+    heights ??= items.map((el) => el.firstElementChild.getBoundingClientRect().height);
+    items.forEach((el, i) => {
+      const at = Number(el.dataset.at);
+      const dur = Number(el.dataset.dur || 320);
+      const p = ease(clamp((t - at) / dur));
+      el.style.height = `${heights[i] * p}px`;
+      el.style.opacity = String(p);
+      el.firstElementChild.style.transform = `translateY(${(1 - p) * 10}px)`;
+    });
+
+    const typing = TYPING.find((s) => t >= s.from && t < s.to + 150);
+    const typed = document.getElementById("typed");
+    if (typing) {
+      const n = Math.round(clamp((t - typing.from) / (typing.to - typing.from)) * typing.text.length);
+      typed.textContent = typing.text.slice(0, n);
+    } else {
+      typed.textContent = "";
+    }
+    document.getElementById("ph").style.display = typed.textContent ? "none" : "inline";
+    document.getElementById("caret").style.opacity = typing || Math.floor(t / 530) % 2 === 0 ? "1" : "0";
+
+    for (const c of CHIPS) {
+      const chip = document.getElementById(c.el);
+      chip.classList.toggle("finished", t >= c.done);
+      [...chip.querySelectorAll(".dots i")].forEach((d, k) => {
+        d.style.opacity = String(0.3 + 0.7 * ((Math.floor(t / 180) + 3 - k) % 3 === 0 ? 1 : 0));
+      });
+    }
+
+    const s = clamp((t - STAMP_AT) / 260);
+    const stamp = document.getElementById("stamp");
+    stamp.style.opacity = String(s);
+    stamp.style.transform = `rotate(-9deg) scale(${1.6 - 0.6 * ease(s)})`;
+    document.getElementById("expiry").style.visibility = t >= STAMP_AT ? "hidden" : "visible";
+  }
+
+  function frames() {
+    const out = [];
+    for (let t = 0; t <= END; t += 1000 / FPS) out.push({ t, hold: Math.round(1000 / FPS) });
+    out[out.length - 1].hold = 2600;
+    return out;
+  }
+
+  window.demo = { seek, frames };
+</script>
+</body>
+</html>

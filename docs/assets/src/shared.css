@@ -1,0 +1,79 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=block");
+
+/* Blueline-proof palette. Light is the default; the renderer emulates dark. */
+:root {
+  --paper: #f3f5f9;
+  --sheet: #ffffff;
+  --ink: #14213d;
+  --muted: #5a6478;
+  --rule: #d8dee8;
+  --blue: #1f6feb;
+  --blue-soft: #e8f0fd;
+  --blue-text: #1858c4;
+  --on-blue: #ffffff;
+  --green: #1e8e4f;
+  --green-soft: #e5f4ec;
+  --amber: #b26b12;
+  --amber-soft: #fbf0df;
+  --red: #c53030;
+  --shadow: 0 1px 0 rgba(20, 33, 61, 0.04), 0 12px 32px -12px rgba(20, 33, 61, 0.18);
+  --sans: "Schibsted Grotesk", system-ui, sans-serif;
+  --serif: "Newsreader", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0d1526;
+    --sheet: #152036;
+    --ink: #e7ecf5;
+    --muted: #96a3bb;
+    --rule: #2a3854;
+    --blue: #6aa6ff;
+    --blue-soft: #1a2b4a;
+    --blue-text: #93c0ff;
+    --on-blue: #0d1526;
+    --green: #45c983;
+    --green-soft: #15322a;
+    --amber: #e8aa48;
+    --amber-soft: #36291a;
+    --red: #f07070;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 16px 40px -16px rgba(0, 0, 0, 0.6);
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { background: transparent; }
+
+body {
+  font-family: var(--sans);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+/* The element the renderer screenshots. */
+.frame {
+  position: relative;
+  background: var(--paper);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+/* Hairline proof grid. */
+.grid-bg {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--blue) 9%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--blue) 9%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Printer's crop marks at the four corners of an element. */
+.crop { position: absolute; width: 22px; height: 22px; border-color: color-mix(in srgb, var(--blue) 60%, transparent); border-style: solid; border-width: 0; }
+.crop.tl { top: 18px; left: 18px; border-top-width: 1.5px; border-left-width: 1.5px; }
+.crop.tr { top: 18px; right: 18px; border-top-width: 1.5px; border-right-width: 1.5px; }
+.crop.bl { bottom: 18px; left: 18px; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+.crop.br { bottom: 18px; right: 18px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+
+.mono { font-family: var(--mono); }

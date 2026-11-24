@@ -17,8 +17,13 @@ export default tseslint.config(
     },
   },
   {
-    files: ["src/cli.ts", "scripts/**/*.ts"],
+    files: ["src/cli.ts", "scripts/**/*.ts", "scripts/**/*.mjs"],
     rules: { "no-console": "off" },
+  },
+  {
+    // Image renderer: callbacks passed to page.evaluate run in the browser.
+    files: ["scripts/assets/*.mjs"],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
   {
     files: ["tests/**/*.ts"],

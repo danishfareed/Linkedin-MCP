@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>linkedin-mcp safety</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .frame { width: 1240px; padding: 50px 56px 54px; display: grid; grid-template-columns: 1fr 430px; gap: 56px; }
+
+  h3 { font-size: 22px; font-weight: 700; letter-spacing: -0.015em; }
+  .lede { margin-top: 6px; font-size: 16.5px; line-height: 1.45; color: var(--muted); }
+  .warm { color: var(--amber); font-weight: 600; }
+
+  /* Caps ledger. */
+  .ledger { margin-top: 24px; }
+  .row { display: grid; grid-template-columns: 200px 1fr 92px; align-items: center; gap: 18px; padding: 12px 0; border-top: 1px solid var(--rule); }
+  .row:last-child { border-bottom: 1px solid var(--rule); }
+  .row .name { font-size: 17.5px; font-weight: 500; }
+  .bar { position: relative; height: 10px; border-radius: 5px; background: color-mix(in srgb, var(--blue) 14%, transparent); }
+  .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: var(--blue); }
+  .row.full .bar i { background: var(--amber); }
+  .row .n { text-align: right; font-size: 17px; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .row .n b { color: var(--ink); font-weight: 700; }
+  .row.full .n b { color: var(--amber); }
+  .hint { margin-top: 16px; font-size: 15.5px; color: var(--muted); line-height: 1.45; }
+  .hint b { color: var(--ink); font-weight: 600; }
+
+  /* Right column. */
+  .block + .block { margin-top: 40px; }
+  .day { position: relative; margin-top: 26px; height: 46px; }
+  .day .track { position: absolute; left: 0; right: 0; top: 14px; height: 14px; border-radius: 7px; background: color-mix(in srgb, var(--muted) 18%, transparent); }
+  .day .open { position: absolute; top: 14px; height: 14px; border-radius: 7px; background: var(--green); left: calc(8 / 24 * 100%); width: calc(13 / 24 * 100%); }
+  .day .now { position: absolute; top: 4px; width: 2px; height: 34px; background: var(--ink); left: calc(14.2 / 24 * 100%); }
+  .day .now::after { content: "now"; position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 13.5px; font-weight: 600; color: var(--ink); }
+  .ticks { position: relative; height: 20px; margin-top: 2px; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ticks span { position: absolute; top: 0; }
+  .ticks span:nth-child(1) { left: 0; }
+  .ticks span:nth-child(2) { left: calc(8 / 24 * 100%); transform: translateX(-50%); color: var(--green); font-weight: 600; }
+  .ticks span:nth-child(3) { left: calc(21 / 24 * 100%); transform: translateX(-50%); color: var(--green); font-weight: 600; }
+  .ticks span:nth-child(4) { right: 0; }
+
+  .flow { margin-top: 20px; list-style: none; }
+  .flow li { position: relative; padding: 0 0 18px 34px; font-size: 16.5px; line-height: 1.4; }
+  .flow li::before { content: ""; position: absolute; left: 6px; top: 6px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--muted); background: var(--paper); z-index: 1; }
+  .flow li::after { content: ""; position: absolute; left: 12px; top: 18px; bottom: -4px; border-left: 2px solid var(--rule); }
+  .flow li:last-child::after { display: none; }
+  .flow li.stop::before { border-color: var(--red); background: var(--red); }
+  .flow li.ok::before { border-color: var(--green); background: var(--green); }
+  .flow small { display: block; color: var(--muted); font-size: 15px; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="frame grid-bg" id="shot">
+  <div>
+    <h3>Daily caps</h3>
+    <p class="lede"><span class="warm">Warm-up, day 5 of 14.</span> Caps are halved for your first two weeks. Weekly ceilings apply on top.</p>
+    <div class="ledger">
+      <div class="row full"><span class="name">Posts</span><div class="bar"><i style="width:100%"></i></div><span class="n"><b>1</b> of 1</span></div>
+      <div class="row"><span class="name">Comments and replies</span><div class="bar"><i style="width:57%"></i></div><span class="n"><b>4</b> of 7</span></div>
+      <div class="row"><span class="name">Reactions</span><div class="bar"><i style="width:60%"></i></div><span class="n"><b>12</b> of 20</span></div>
+      <div class="row"><span class="name">Connection requests</span><div class="bar"><i style="width:40%"></i></div><span class="n"><b>2</b> of 5</span></div>
+      <div class="row"><span class="name">Messages</span><div class="bar"><i style="width:43%"></i></div><span class="n"><b>3</b> of 7</span></div>
+      <div class="row"><span class="name">Profile views</span><div class="bar"><i style="width:45%"></i></div><span class="n"><b>9</b> of 20</span></div>
+      <div class="row"><span class="name">Searches</span><div class="bar"><i style="width:28%"></i></div><span class="n"><b>2</b> of 7</span></div>
+    </div>
+    <p class="hint"><b>Posts are used up for today.</b> The next one waits until midnight. Nothing is queued or retried behind your back.</p>
+  </div>
+
+  <div>
+    <div class="block">
+      <h3>Working hours</h3>
+      <p class="lede">Sends run between 08:00 and 21:00 your time. Reads work at any hour.</p>
+      <div class="day"><div class="track"></div><div class="open"></div><div class="now"></div></div>
+      <div class="ticks"><span>00:00</span><span>08:00</span><span>21:00</span></div>
+    </div>
+
+    <div class="block">
+      <h3>The guard</h3>
+      <p class="lede">Every page is checked for a CAPTCHA, a verification prompt or an unusual-activity notice.</p>
+      <ul class="flow">
+        <li class="stop">LinkedIn shows a security check<small>Everything pauses for 24 hours.</small></li>
+        <li>You open <span class="mono">login</span> and resolve it yourself<small>linkedin-mcp never tries to solve one.</small></li>
+        <li class="ok">You resume<small>From your assistant or the command line.</small></li>
+      </ul>
+    </div>
+  </div>
+</div>
+</body>
+</html>
