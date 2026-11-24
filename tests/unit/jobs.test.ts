@@ -140,6 +140,11 @@ describe("job details parser", () => {
     expect(externalApplyUrl("https://jobs.example/apply/9")).toBe("https://jobs.example/apply/9");
     expect(externalApplyUrl("https://www.linkedin.com/jobs/view/123/")).toBeNull();
     expect(externalApplyUrl(null)).toBeNull();
+    // Only plain web links reach the assistant.
+    expect(externalApplyUrl("javascript:alert(1)")).toBeNull();
+    expect(externalApplyUrl("data:text/html,hi")).toBeNull();
+    expect(externalApplyUrl("https://www.linkedin.com/jobs/view/externalApply/1?url=javascript%3Aalert(1)")).toBe("https://www.linkedin.com/jobs/view/externalApply/1?url=javascript%3Aalert(1)");
+    expect(externalApplyUrl("https://www.linkedin.com/jobs/view/123/?url=file%3A%2F%2F%2Fetc%2Fpasswd")).toBeNull();
   });
 });
 

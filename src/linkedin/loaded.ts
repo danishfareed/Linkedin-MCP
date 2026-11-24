@@ -6,7 +6,7 @@ import { LinkedInMcpError, selectorBroken } from "../errors.js";
  * main content's text, so a real "nothing here" isn't reported as broken.
  */
 const EMPTY_STATE =
-  /no results found|no matching results|try (a different|different) (search|keywords)|no new notifications|you're all caught up|no messages yet|you have no (new )?messages|no pending invitations|no invitations|nothing to see|no posts yet|hasn't posted|no recent activity|no jobs found|no saved jobs|there are no/i;
+  /no results found|no matching results|try (a different|different) (search|keywords)|no new notifications|you're all caught up|no messages yet|you have no (new )?messages|no pending invitations|no invitations|nothing to see|no posts yet|hasn['’]t posted|no recent activity|no (matching )?jobs found|no saved jobs|there are no/i;
 
 /**
  * Call after waiting for a list's containers. If none appeared, decide whether

@@ -180,17 +180,26 @@ export function trimDescription(text: string | null, max = JOB_DESCRIPTION_MAX):
   return { text: `${(space > max * 0.8 ? cut.slice(0, space) : cut).trimEnd()}…`, truncated: true };
 }
 
-/** The real apply destination behind LinkedIn's external apply link, when the page exposes it. */
-export function externalApplyUrl(href: string | null | undefined): string | null {
-  if (!href) return null;
-  let u: URL;
+/** Parses a URL and keeps it only if it's plain http(s): no javascript:, data: or file: links reach the assistant. */
+function webUrl(href: string, base?: string): URL | null {
   try {
-    u = new URL(href, BASE);
+    const u = new URL(href, base);
+    return u.protocol === "https:" || u.protocol === "http:" ? u : null;
   } catch {
     return null;
   }
-  const target = u.searchParams.get("url");
-  if (target && /^https?:\/\//i.test(target)) return target;
+}
+
+/** The real apply destination behind LinkedIn's external apply link, when the page exposes it. */
+export function externalApplyUrl(href: string | null | undefined): string | null {
+  if (!href) return null;
+  const u = webUrl(href, BASE);
+  if (!u) return null;
+  const param = u.searchParams.get("url");
+  if (param) {
+    const target = webUrl(param);
+    if (target) return target.toString();
+  }
   if (!/(^|\.)linkedin\.com$/i.test(u.hostname)) return u.toString();
   return /externalApply/i.test(u.pathname) ? u.toString() : null;
 }
