@@ -1,0 +1,28 @@
+[
+  {
+    "urn": "urn:li:comment:(activity:7260000000000000001,7260000000000000101)",
+    "depth": 0,
+    "text": "Maria Gomez\nMaria Gomez\n • 2nd\nProduct Lead at Tailspin\n1d\nThis is the kind of transparency more teams need.\nLike\n14\nReply\n2 replies",
+    "links": [{ "href": "https://www.linkedin.com/in/maria-gomez-0101/", "text": "Maria Gomez", "label": "View Maria Gomez’s profile" }],
+    "labels": ["14 Reactions on Maria Gomez’s comment", "Reply to Maria Gomez’s comment"],
+    "fields": {
+      "author": "Maria Gomez",
+      "headline": "Product Lead at Tailspin",
+      "text": "This is the kind of transparency more teams need.",
+      "time": "1d",
+      "reactions": "14"
+    },
+    "attrs": { "authorLink": "/in/maria-gomez-0101/" },
+    "items": []
+  },
+  {
+    "urn": "urn:li:comment:(activity:7260000000000000001,7260000000000000102)",
+    "depth": 1,
+    "text": "Alex Rivera\nAlex Rivera\nAuthor\nFounder at Northwind Labs | Writing about B2B growth\n20h\nThanks Maria! Writing it down was the hardest part.\nLike\nReply",
+    "links": [{ "href": "https://www.linkedin.com/in/alex-rivera-0001/", "text": "Alex Rivera", "label": null }],
+    "labels": ["Reply to Alex Rivera’s comment"],
+    "fields": {},
+    "attrs": {},
+    "items": []
+  }
+]

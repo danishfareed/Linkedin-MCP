@@ -1,0 +1,63 @@
+{
+  "top": {
+    "urn": null,
+    "depth": 0,
+    "text": "Taylor Brooks\nShe/Her\nTaylor Brooks\nVP Marketing at Litware | Ex-Adventure Works\nManchester, England, United Kingdom\nContact info\n4,812 followers\n500+ connections\nMessage\nMore",
+    "links": [],
+    "labels": [],
+    "fields": {
+      "name": "Taylor Brooks",
+      "headline": "VP Marketing at Litware | Ex-Adventure Works",
+      "location": "Manchester, England, United Kingdom",
+      "connections": "500+",
+      "followers": "4,812 followers"
+    },
+    "attrs": {},
+    "items": []
+  },
+  "sections": [
+    {
+      "urn": null,
+      "depth": 0,
+      "text": "About\nAbout\nI help B2B teams turn product launches into pipeline.\nPreviously led growth at Adventure Works.\n…see more",
+      "links": [],
+      "labels": [],
+      "fields": { "heading": "About", "about": "I help B2B teams turn product launches into pipeline.\nPreviously led growth at Adventure Works." },
+      "attrs": { "anchor": "about" },
+      "items": []
+    },
+    {
+      "urn": null,
+      "depth": 0,
+      "text": "Experience\nExperience\n...",
+      "links": [],
+      "labels": [],
+      "fields": { "heading": "Experience", "about": null },
+      "attrs": { "anchor": "experience" },
+      "items": [
+        "VP Marketing\nVP Marketing\nLitware · Full-time\nLitware · Full-time\nMar 2022 - Present · 2 yrs 9 mos\nMar 2022 - Present · 2 yrs 9 mos\nManchester, England, United Kingdom · Hybrid\nBuilt the demand-gen team from 2 to 11.\nSkills: Demand Generation · Positioning",
+        "Head of Growth\nAdventure Works\n2018 - 2022 · 4 yrs\nLondon, England, United Kingdom\nRan lifecycle and paid acquisition."
+      ]
+    },
+    {
+      "urn": null,
+      "depth": 0,
+      "text": "Education\nEducation",
+      "links": [],
+      "labels": [],
+      "fields": { "heading": "Education" },
+      "attrs": { "anchor": "education" },
+      "items": ["University of Leeds\nBA, Economics\n2011 - 2014"]
+    },
+    {
+      "urn": null,
+      "depth": 0,
+      "text": "Skills\nSkills",
+      "links": [],
+      "labels": [],
+      "fields": { "heading": "Skills" },
+      "attrs": { "anchor": "skills" },
+      "items": ["Demand Generation\nDemand Generation\n12 endorsements", "Positioning\nEndorsed by 3 colleagues at Litware"]
+    }
+  ]
+}

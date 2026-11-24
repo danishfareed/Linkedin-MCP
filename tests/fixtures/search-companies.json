@@ -1,0 +1,22 @@
+[
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Northwind Labs\nSoftware Development • London\n18K followers\nFollow",
+    "links": [{ "href": "https://www.linkedin.com/company/northwind-labs/", "text": "Northwind Labs", "label": null }],
+    "labels": [],
+    "fields": { "name": "Northwind Labs", "subtitle": "Software Development • London", "followers": "18K followers" },
+    "attrs": { "link": "https://www.linkedin.com/company/northwind-labs/" },
+    "items": []
+  },
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Bluebird Studio\nDesign Services • Berlin\n2,310 followers\nFollow",
+    "links": [{ "href": "https://www.linkedin.com/company/bluebird-studio/?trk=x", "text": "Bluebird Studio", "label": null }],
+    "labels": [],
+    "fields": {},
+    "attrs": {},
+    "items": []
+  }
+]

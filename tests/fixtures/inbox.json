@@ -1,0 +1,30 @@
+{
+  "conversations": [
+    {
+      "urn": null,
+      "depth": 0,
+      "text": "Status is online\nChris Park\nNov 21\nChris: Thanks, happy to chat next week",
+      "links": [{ "href": "https://www.linkedin.com/messaging/thread/2-AbCdEf==/", "text": "", "label": null }],
+      "labels": [],
+      "fields": { "name": "Chris Park", "snippet": "Chris: Thanks, happy to chat next week", "time": "Nov 21" },
+      "attrs": { "link": "/messaging/thread/2-AbCdEf==/", "cls": "msg-conversation-card msg-conversations-container__pillar msg-conversation-card--unread" },
+      "items": []
+    },
+    {
+      "urn": null,
+      "depth": 0,
+      "text": "Priya Natarajan\n10:42 AM\nYou: Sounds good!",
+      "links": [{ "href": "https://www.linkedin.com/messaging/thread/2-XyZ123==/?trk=x", "text": "", "label": null }],
+      "labels": [],
+      "fields": {},
+      "attrs": {},
+      "items": []
+    }
+  ],
+  "messages": [
+    { "urn": null, "depth": 0, "text": "", "links": [], "labels": [], "fields": { "sender": "Chris Park", "time": "9:58 AM", "text": "Hi! Loved your post on roadmaps." }, "attrs": {}, "items": [] },
+    { "urn": null, "depth": 0, "text": "", "links": [], "labels": [], "fields": { "sender": null, "time": null, "text": "Would you be open to a quick call?" }, "attrs": {}, "items": [] },
+    { "urn": null, "depth": 0, "text": "", "links": [], "labels": [], "fields": { "sender": "You", "time": "10:15 AM", "text": "Sure, next Tuesday works." }, "attrs": {}, "items": [] },
+    { "urn": null, "depth": 0, "text": "Nov 21", "links": [], "labels": [], "fields": { "sender": null, "time": "Nov 21", "text": null }, "attrs": {}, "items": [] }
+  ]
+}

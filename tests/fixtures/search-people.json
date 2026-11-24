@@ -1,0 +1,32 @@
+[
+  {
+    "urn": "urn:li:fsd_entityResultViewModel:(urn:li:fsd_profile:AAA,SEARCH_SRP,DEFAULT)",
+    "depth": 0,
+    "text": "Chris Park\nView Chris Park’s profile\n• 2nd\n2nd degree connection\nData Engineer at Proseware\nSeattle, WA\nCurrent: Data Engineer at Proseware\n12 mutual connections\nConnect",
+    "links": [{ "href": "https://www.linkedin.com/in/chris-park-0201?miniProfileUrn=x", "text": "Chris Park\nView Chris Park’s profile", "label": null }],
+    "labels": ["Invite Chris Park to connect"],
+    "fields": { "name": "Chris Park", "headline": "Data Engineer at Proseware", "location": "Seattle, WA", "degree": "• 2nd" },
+    "attrs": { "link": "https://www.linkedin.com/in/chris-park-0201?miniProfileUrn=x" },
+    "items": []
+  },
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Dana Whitfield\nView Dana Whitfield’s profile\n• 3rd+\nStaff Engineer, Platform\nAustin, Texas\nFollow",
+    "links": [{ "href": "https://www.linkedin.com/in/dana-whitfield-0202/", "text": "Dana Whitfield", "label": null }],
+    "labels": [],
+    "fields": {},
+    "attrs": {},
+    "items": []
+  },
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "LinkedIn Member\nSenior Recruiter\nNew York",
+    "links": [{ "href": "https://www.linkedin.com/search/results/people/headless", "text": "LinkedIn Member", "label": null }],
+    "labels": [],
+    "fields": {},
+    "attrs": {},
+    "items": []
+  }
+]

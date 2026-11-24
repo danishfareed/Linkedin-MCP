@@ -1,0 +1,22 @@
+[
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Riley Chen\nRiley Chen\nGrowth Marketer at Wingtip\nRiley Chen and 4 other mutual connections\n2 days ago\nHi! Enjoyed your talk at the meetup.\nIgnore\nAccept",
+    "links": [{ "href": "https://www.linkedin.com/in/riley-chen-0301/", "text": "Riley Chen", "label": null }],
+    "labels": ["Ignore an invitation from Riley Chen", "Accept Riley Chen’s invitation"],
+    "fields": { "name": "Riley Chen", "headline": "Growth Marketer at Wingtip", "time": "2 days ago", "note": "Hi! Enjoyed your talk at the meetup." },
+    "attrs": { "link": "https://www.linkedin.com/in/riley-chen-0301/" },
+    "items": []
+  },
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Morgan Hale\nFounder, Hale & Co\nYesterday\nIgnore\nAccept",
+    "links": [{ "href": "https://www.linkedin.com/in/morgan-hale-0302?trk=x", "text": "Morgan Hale", "label": null }],
+    "labels": [],
+    "fields": {},
+    "attrs": {},
+    "items": []
+  }
+]

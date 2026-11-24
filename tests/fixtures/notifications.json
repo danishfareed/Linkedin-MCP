@@ -1,0 +1,22 @@
+[
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Unread notification.\nMaria Gomez commented on your post: This is the kind of transparency more teams need.\n1d\nOptions",
+    "links": [{ "href": "https://www.linkedin.com/feed/update/urn:li:activity:7260000000000000001/?commentUrn=x", "text": "", "label": null }],
+    "labels": ["Show options"],
+    "fields": { "text": "Maria Gomez commented on your post: This is the kind of transparency more teams need.", "time": "1d" },
+    "attrs": { "link": "https://www.linkedin.com/feed/update/urn:li:activity:7260000000000000001/?commentUrn=x", "cls": "nt-card nt-card--unread" },
+    "items": []
+  },
+  {
+    "urn": null,
+    "depth": 0,
+    "text": "Your post has 1,000 impressions so far. See who engaged.\n3d\nView analytics",
+    "links": [{ "href": "https://www.linkedin.com/analytics/post-summary/urn:li:activity:7260000000000000001/", "text": "View analytics", "label": null }],
+    "labels": [],
+    "fields": {},
+    "attrs": { "link": "https://www.linkedin.com/analytics/post-summary/urn:li:activity:7260000000000000001/", "cls": "nt-card" },
+    "items": []
+  }
+]
