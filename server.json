@@ -1,0 +1,46 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.danishfareed/linkedin-mcp",
+  "title": "LinkedIn MCP",
+  "description": "Run your LinkedIn from an AI assistant: post, schedule, analytics, comments, inbox. Safe by default.",
+  "version": "0.1.0",
+  "websiteUrl": "https://github.com/danishfareed/Linkedin-MCP#readme",
+  "repository": {
+    "url": "https://github.com/danishfareed/Linkedin-MCP",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@danishfareed/linkedin-mcp",
+      "version": "0.1.0",
+      "runtimeHint": "npx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "LINKEDIN_MCP_DRY_RUN",
+          "description": "Simulate write actions (posts, comments, messages) without sending anything.",
+          "format": "boolean",
+          "default": "false",
+          "isRequired": false
+        },
+        {
+          "name": "LINKEDIN_MCP_HEADLESS",
+          "description": "Set to false to watch the browser while the assistant works.",
+          "format": "boolean",
+          "default": "true",
+          "isRequired": false
+        },
+        {
+          "name": "LINKEDIN_MCP_WORKING_HOURS",
+          "description": "Local hours when write actions may run, e.g. 08:00-21:00, or off.",
+          "format": "string",
+          "default": "08:00-21:00",
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}

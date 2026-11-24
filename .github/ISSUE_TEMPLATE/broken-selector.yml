@@ -1,0 +1,36 @@
+name: Broken selector
+description: A tool stopped working because LinkedIn changed its page layout
+title: "Broken selector: "
+labels: [broken-selector]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please don't paste personal data (names, messages, profile URLs) from your account.
+  - type: input
+    id: tool
+    attributes:
+      label: Which tool failed?
+      placeholder: e.g. get_feed, create_post
+    validations:
+      required: true
+  - type: input
+    id: selector
+    attributes:
+      label: Selector name from the error
+      description: The SELECTOR_BROKEN error includes a "selector" field, e.g. composer.startPost.
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `npx @danishfareed/linkedin-mcp doctor`
+      render: text
+  - type: input
+    id: locale
+    attributes:
+      label: LinkedIn interface language
+      placeholder: e.g. English, Deutsch
+  - type: input
+    id: version
+    attributes:
+      label: linkedin-mcp version
+      placeholder: npx @danishfareed/linkedin-mcp --version

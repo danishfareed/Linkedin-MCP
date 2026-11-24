@@ -53,11 +53,18 @@ describe("validateUpload", () => {
     await expect(validateUpload(pdfAsImage, "image", home)).rejects.toThrow(/must be/);
   });
 
-  it("refuses anything inside the linkedin-mcp home, even through a symlink", async () => {
-    const { dir, home } = setup();
+  it("refuses anything inside the linkedin-mcp home", async () => {
+    const { home } = setup();
     const cookie = join(home, "profile", "Cookies.png");
     writeFileSync(cookie, PNG);
     await expect(validateUpload(cookie, "image", home)).rejects.toThrow(/protected folder/);
+  });
+
+  // Creating symlinks on Windows needs Developer Mode or admin rights.
+  it.skipIf(process.platform === "win32")("follows symlinks before checking protected folders", async () => {
+    const { dir, home } = setup();
+    const cookie = join(home, "profile", "Cookies.png");
+    writeFileSync(cookie, PNG);
     const link = join(dir, "innocent.png");
     symlinkSync(cookie, link);
     await expect(validateUpload(link, "image", home)).rejects.toThrow(/protected folder/);
