@@ -26,6 +26,8 @@ export const PROMPT_TOOLS = [
   "reply_to_comment",
   "react_to_post",
   "confirm_action",
+  "confirm_batch",
+  "batch_status",
   "cancel_action",
   "get_playbook",
   "growth_profile",
@@ -49,7 +51,7 @@ const topic = (id: PromptTopic): string => `${t("get_playbook")} with topic "${i
 
 /** Appended to every prompt: the server's preview-and-approve model and caps. */
 export const SAFETY_RULES = `Safety rules (these override everything above):
-- Nothing is sent to LinkedIn without the user's explicit approval of that exact action. ${t("create_post")}, ${t("schedule_post")}, ${t("comment_on_post")}, ${t("reply_to_comment")} and ${t("react_to_post")} only return a preview and a confirmation_token. Show the preview to the user word for word, wait for a clear yes, then call ${t("confirm_action")} with that token. One approval sends one action: never confirm on your own initiative and never batch-confirm. If the user changes their mind, call ${t("cancel_action")}.
+- Nothing is sent to LinkedIn without the user's explicit approval of that exact action. ${t("create_post")}, ${t("schedule_post")}, ${t("comment_on_post")}, ${t("reply_to_comment")} and ${t("react_to_post")} only return a preview and a confirmation_token. Show the preview to the user word for word, wait for a clear yes, then call ${t("confirm_action")} with that token. Never confirm on your own initiative, and never treat approval of one item as approval of another. To approve a reviewed week of scheduled posts (or several replies, comments or reactions) in one sitting, call ${t("confirm_batch")} only after the user has read every preview in full and approved each one; check ${t("batch_status")} for results. Messages and connection requests are always confirmed one at a time. If the user changes their mind, call ${t("cancel_action")}.
 - ${t("confirm_action")} returns sent, unconfirmed or not_sent. Never retry an unconfirmed action (it may already have been sent); ask the user to check LinkedIn. A not_sent action can be retried once its reason is fixed. USER_DECLINED means nothing was sent.
 - Daily and weekly caps protect the account (by default 2 posts, 15 comments and replies, 40 reactions a day; halved during the first 14 days). Check ${t("get_limits")} before a session with several sends. On LIMIT_REACHED, stop and tell the user when it resets; never work around it.
 - On CHECKPOINT, CIRCUIT_OPEN or RATE_LIMITED, stop everything and relay the next_step to the user.
@@ -120,7 +122,7 @@ ${SAFETY_RULES}`,
   {
     name: "plan_my_week",
     title: "Plan my LinkedIn week",
-    description: "Turn the approved strategy and idea bank into a week of posts and engagement, save it to the content calendar, and schedule approved posts one by one.",
+    description: "Turn the approved strategy and idea bank into a week of posts and engagement, save it to the content calendar, and schedule the approved week in one sitting.",
     args: {
       week_start: "The Monday of the week to plan, e.g. 2026-12-07. Defaults to next week.",
       posts_per_week: "How many posts this week. Defaults to the strategy's cadence.",
@@ -129,7 +131,7 @@ ${SAFETY_RULES}`,
 ${given(args, { week_start: "Week starting", posts_per_week: "Posts this week" })}
 1. Gather context:
    - ${t("growth_strategy")} (get): pillars, funnel ratio, cadence. If there's no approved strategy, suggest the start_growth_strategy prompt, but make a lightweight plan if the user prefers.
-   - ${t("growth_calendar")} (get) for the week, ${t("list_scheduled_posts")} for what's already queued in LinkedIn, and ${t("growth_ideas")} (list) for candidates.
+   - ${t("growth_calendar")} (upcoming) for the week, ${t("list_scheduled_posts")} for what's already queued in LinkedIn, and ${t("growth_ideas")} (list) for candidates.
    - ${t("get_my_posts")} (limit 10), so you don't repeat a recent pillar, format or hook, and ${t("growth_report")} for the latest insights, if any.
    - ${t("get_limits")} for the post cap.
 
@@ -142,7 +144,7 @@ ${given(args, { week_start: "Week starting", posts_per_week: "Posts this week" }
 
 3. Ask for changes. When the user approves, save the plan with ${t("growth_calendar")}.
 
-4. Offer to draft each post with the write_post prompt. Schedule a post only once its text is final and the user has approved it: call ${t("schedule_post")} for that one post, show the preview word for word, and call ${t("confirm_action")} only after an explicit yes. Repeat post by post, within the daily post cap.
+4. Offer to draft each post with the write_post prompt, and run ${t("review_post")} on each draft. When the week's posts are final, call ${t("schedule_post")} for each (scheduled posts count against the cap of the day they publish), show every preview word for word, and ask the user to approve them. Then call ${t("confirm_batch")} with the approved tokens; in clients with a dialog the user ticks each post. Check ${t("batch_status")}, and record each scheduled time with ${t("growth_calendar")} (update, scheduled_for). Drop anything the user didn't approve.
 
 ${SAFETY_RULES}`,
   },

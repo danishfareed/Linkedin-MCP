@@ -7,6 +7,8 @@ import { messagingTools, networkTools, researchTools } from "./tools/people.js";
 import { type ToolDef, registerTools } from "./tools/registry.js";
 import { batchTools } from "./tools/batch.js";
 import { growthTools } from "./tools/growth.js";
+import { playbookTools } from "./tools/playbook.js";
+import { registerPlaybook } from "./growth/playbook/index.js";
 import { sessionTools } from "./tools/session.js";
 
 export const INSTRUCTIONS = `This server runs the user's own LinkedIn account through a local browser.
@@ -23,6 +25,7 @@ Rules:
 - search_jobs, get_job_details and get_saved_jobs are read-only. This server never applies to jobs.
 - List results include complete. When it is false, tell the user the list may be partial and pass on the note.
 - UNSUPPORTED_LANGUAGE means LinkedIn isn't set to English; sending stops before typing anything. Reads still work.
+- get_playbook (and the linkedin-mcp://playbook resources and growth prompts) holds sourced methods, hooks, psychology and strategy. Use it when planning or writing, and keep its evidence labels when you quote it.
 - Growth workspace: growth_profile, growth_strategy, growth_ideas, growth_calendar and review_post stay on this computer; growth_report only reads LinkedIn. Approve a strategy only after the user explicitly says yes. growth_calendar never schedules anything: call schedule_post with a slot's schedule_post_input (or confirm_batch for a reviewed week), then record scheduled_for with growth_calendar update. Run review_post on drafts before showing them, and treat "directional only" findings as hints, not conclusions.
 - Errors include a next_step field; relay it to the user.`;
 
@@ -30,6 +33,7 @@ export const ALL_TOOLS: ToolDef[] = [
   ...sessionTools,
   ...batchTools,
   ...growthTools,
+  ...playbookTools,
   ...contentTools,
   ...engagementTools,
   ...researchTools,
@@ -41,5 +45,6 @@ export const ALL_TOOLS: ToolDef[] = [
 export function createServer(ctx: AppContext): McpServer {
   const server = new McpServer({ name: "linkedin-mcp", title: "LinkedIn MCP", version: VERSION }, { instructions: INSTRUCTIONS });
   registerTools(server, ctx, ALL_TOOLS);
+  registerPlaybook(server);
   return server;
 }
