@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { withBrowser } from "../context.js";
 import { invalidInput } from "../errors.js";
-import { readFeed, searchPosts } from "../linkedin/pages/feed.js";
+import { readFeedPosts, searchPosts } from "../linkedin/pages/feed.js";
 import { readNotifications } from "../linkedin/pages/lists.js";
 import { REACTIONS, comment, react, readComments, reply } from "../linkedin/pages/post.js";
-import { postUrl } from "../linkedin/urls.js";
+import { DATE_POSTED, POST_CONTENT_TYPES, POST_SORTS, postUrl } from "../linkedin/urls.js";
 import { PREVIEW_NOTE, READ, WRITE_PREVIEW, defineTool } from "./registry.js";
 import { defineWrite, executeWrite, prepareWrite } from "./write.js";
 
@@ -46,27 +46,37 @@ export const engagementTools = [
   defineTool({
     name: "get_feed",
     title: "Read your LinkedIn feed",
-    description: "Recent posts from the user's home feed (author, text, reactions, comments, reposts, post URL). Promoted posts are skipped.",
+    description:
+      "Recent posts from the user's home feed (author, text, reactions, comments, reposts, post URL), at most 20. Promoted posts are skipped. " +
+      "complete is false, with a note, when fewer posts than asked for could be loaded.",
     input: { limit: z.number().int().min(1).max(20).default(10) },
     annotations: READ,
-    handler: async (args, ctx) => ({ posts: await withBrowser(ctx, (nav) => readFeed(nav, args.limit)) }),
+    handler: async (args, ctx) => withBrowser(ctx, (nav) => readFeedPosts(nav, args.limit)),
   }),
 
   defineTool({
     name: "search_posts",
     title: "Search LinkedIn posts",
-    description: "Search public LinkedIn posts by keywords, optionally limited to the past 24 hours, week or month. Counts against the daily search limit.",
+    description:
+      "Search public LinkedIn posts by keywords (at most 20 results), optionally limited to the past 24 hours, week or month, sorted by relevance or latest, and filtered to posts with photos, videos or documents. " +
+      "complete is false, with a note, when fewer posts than asked for could be loaded. Counts against the daily search limit.",
     input: {
       keywords: z.string().min(1).max(200),
-      date_posted: z.enum(["past-24h", "past-week", "past-month"]).optional(),
+      date_posted: z.enum(DATE_POSTED).optional(),
+      sort: z.enum(POST_SORTS).default("relevance").describe("relevance (LinkedIn's default) or latest (newest first)."),
+      content_type: z.enum(POST_CONTENT_TYPES).optional().describe("Only posts that contain photos, videos or documents."),
       limit: z.number().int().min(1).max(20).default(10),
     },
     annotations: READ,
-    handler: async (args, ctx) =>
-      withBrowser(ctx, async (nav) => {
+    handler: async (args, ctx) => {
+      if (!args.keywords.trim()) throw invalidInput("Give keywords to search for.");
+      await ctx.limits.assertAvailable("search");
+      const opts = { datePosted: args.date_posted, sort: args.sort, contentType: args.content_type };
+      return withBrowser(ctx, async (nav) => {
         await ctx.limits.consume("search");
-        return { posts: await searchPosts(nav, args.keywords, args.date_posted, args.limit) };
-      }),
+        return searchPosts(nav, args.keywords.trim(), opts, args.limit);
+      });
+    },
   }),
 
   defineTool({
@@ -75,7 +85,10 @@ export const engagementTools = [
     description: "Comments and replies on a LinkedIn post. Each comment has an id you can pass to reply_to_comment.",
     input: { post_url: z.string(), limit: z.number().int().min(1).max(50).default(20) },
     annotations: READ,
-    handler: async (args, ctx) => ({ comments: await withBrowser(ctx, (nav) => readComments(nav, args.post_url, args.limit)) }),
+    handler: async (args, ctx) => {
+      const url = postUrl(args.post_url);
+      return { comments: await withBrowser(ctx, (nav) => readComments(nav, url, args.limit)) };
+    },
   }),
 
   defineTool({

@@ -571,3 +571,69 @@ export const EXTRACT = {
 
   page: { container: ["main", "body"], limit: 1 } satisfies ExtractSpec,
 } as const;
+
+// ---------------------------------------------------------------------------
+// Lists, feed fallbacks, activity and jobs
+// ---------------------------------------------------------------------------
+
+export const LIST_SEL = {
+  /** Buttons that replaced infinite scroll on some lists. Anchored so post-level "…more" buttons never match. */
+  loadMore: entry(
+    "list.loadMore",
+    { role: "button", name: /^(show more results|load more( results| posts)?|show more (feed updates|posts|updates)|see more (results|posts))$/i },
+    { css: "button.scaffold-finite-scroll__load-button" },
+  ),
+};
+
+/**
+ * The newer feed drops data-urn from post containers, so after the classic
+ * containers come structural fallbacks. Each post's own permalink is captured
+ * from inside its container, and the :scope attributes tell the parser whether
+ * a URN came from the container itself or from something nested in it.
+ */
+const POST_CONTAINER_FALLBACKS = [
+  "div[data-view-name='feed-full-update']",
+  "main div[role='article']",
+  "main [role='listitem']:has(a[href*='/feed/update/urn:li:'])",
+  "main article:has(a[href*='/feed/update/urn:li:'])",
+];
+
+const OWN_POST_ATTRS: NonNullable<ExtractSpec["attrs"]> = {
+  ...POST_ATTRS,
+  postLink: {
+    css: [
+      "a.update-components-actor__sub-description-link[href*='/feed/update/']",
+      ".update-components-actor__sub-description a[href*='/feed/update/']",
+      ".update-components-actor a[href*='/feed/update/']",
+      "a[href*='/feed/update/urn:li:activity:']",
+      "a[href*='/feed/update/urn:li:ugcPost:']",
+      "a[href*='/feed/update/urn:li:share:']",
+      "a[href*='/posts/']",
+    ],
+    attr: "href",
+  },
+  selfUrn: { css: [":scope"], attr: "data-urn" },
+  selfId: { css: [":scope"], attr: "data-id" },
+};
+
+export const FEED_EXTRACT = {
+  post: {
+    container: [...POST_CONTAINERS, ...POST_CONTAINER_FALLBACKS],
+    fields: POST_FIELDS,
+    attrs: OWN_POST_ATTRS,
+  } satisfies ExtractSpec,
+} as const;
+
+export const ACTIVITY_EXTRACT = {
+  /** A person's recent-activity page or a company's posts tab. */
+  post: {
+    container: [
+      ...POST_CONTAINERS,
+      "div.profile-creator-shared-feed-update__container",
+      "div.occludable-update:has(a[href*='/feed/update/urn:li:'])",
+      ...POST_CONTAINER_FALLBACKS,
+    ],
+    fields: POST_FIELDS,
+    attrs: OWN_POST_ATTRS,
+  } satisfies ExtractSpec,
+} as const;

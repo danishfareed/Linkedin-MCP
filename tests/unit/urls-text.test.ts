@@ -46,8 +46,9 @@ describe("urls", () => {
     expect(u.searchParams.get("network")).toBe('["F","S"]');
     expect(u.searchParams.get("titleFreeText")).toBe("VP");
     expect(u.searchParams.get("company")).toBe("Litware");
-    const p = new URL(searchPostsUrl("mcp server", "past-week"));
+    const p = new URL(searchPostsUrl("mcp server", { datePosted: "past-week" }));
     expect(p.searchParams.get("datePosted")).toBe('"past-week"');
+    expect(p.searchParams.get("sortBy")).toBeNull();
   });
 
   it("cleans links", () => {

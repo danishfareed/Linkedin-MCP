@@ -183,11 +183,12 @@ export const contentTools = [
   defineTool({
     name: "get_my_posts",
     title: "Get your recent posts",
-    description: "The user's own recent posts with impressions, reactions, comments and reposts where LinkedIn shows them.",
+    description:
+      "The user's own recent posts (at most 20) with impressions, reactions, comments and reposts where LinkedIn shows them. " +
+      "complete is false, with a note, when fewer posts than asked for could be loaded.",
     input: { limit: z.number().int().min(1).max(20).default(10) },
     annotations: READ,
-    handler: async (args, ctx) =>
-      withBrowser(ctx, async (nav) => ({ posts: await readMyPosts(nav, await myPublicId(ctx, nav), args.limit) })),
+    handler: async (args, ctx) => withBrowser(ctx, async (nav) => readMyPosts(nav, await myPublicId(ctx, nav), args.limit)),
   }),
 
   defineTool({
@@ -196,7 +197,10 @@ export const contentTools = [
     description: "Impressions, members reached, profile views, followers gained, reactions, comments, reposts, saves, sends and top viewer demographics for one of the user's own posts.",
     input: { post_url: z.string().describe("URL of your post.") },
     annotations: READ,
-    handler: async (args, ctx) => withBrowser(ctx, (nav) => readPostAnalytics(nav, args.post_url)),
+    handler: async (args, ctx) => {
+      const url = postUrl(args.post_url);
+      return withBrowser(ctx, (nav) => readPostAnalytics(nav, url));
+    },
   }),
 
   defineTool({

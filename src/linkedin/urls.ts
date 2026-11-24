@@ -85,14 +85,29 @@ export const urls = {
   profileDetails: (id: string, section: string) => `${BASE}/in/${encodeURIComponent(id)}/details/${section}/`,
 };
 
-export type DatePosted = "past-24h" | "past-week" | "past-month";
+export const DATE_POSTED = ["past-24h", "past-week", "past-month"] as const;
+export type DatePosted = (typeof DATE_POSTED)[number];
 
-export function searchPostsUrl(keywords: string, datePosted?: DatePosted, sortBy: "relevance" | "date_posted" = "relevance"): string {
+export const POST_SORTS = ["relevance", "latest"] as const;
+export type PostSort = (typeof POST_SORTS)[number];
+
+export const POST_CONTENT_TYPES = ["photos", "videos", "documents"] as const;
+export type PostContentType = (typeof POST_CONTENT_TYPES)[number];
+
+export interface PostSearchOptions {
+  datePosted?: DatePosted;
+  /** "latest" maps to LinkedIn's sortBy="date_posted". */
+  sort?: PostSort;
+  contentType?: PostContentType;
+}
+
+export function searchPostsUrl(keywords: string, opts: PostSearchOptions = {}): string {
   const u = new URL(`${BASE}/search/results/content/`);
   u.searchParams.set("keywords", keywords);
   u.searchParams.set("origin", "FACETED_SEARCH");
-  if (datePosted) u.searchParams.set("datePosted", JSON.stringify(datePosted));
-  if (sortBy === "date_posted") u.searchParams.set("sortBy", JSON.stringify("date_posted"));
+  if (opts.datePosted) u.searchParams.set("datePosted", JSON.stringify(opts.datePosted));
+  if (opts.sort === "latest") u.searchParams.set("sortBy", JSON.stringify("date_posted"));
+  if (opts.contentType) u.searchParams.set("contentType", JSON.stringify(opts.contentType));
   return u.toString();
 }
 
@@ -145,7 +160,13 @@ export function cleanLink(href: string | null | undefined): string | null {
   if (company) return `${BASE}/${company[1]}/${company[2]}/`;
   const thread = /^\/messaging\/thread\/([^/]+)/.exec(u.pathname);
   if (thread) return `${BASE}/messaging/thread/${thread[1]}/`;
-  const urn = ACTIVITY_RE.exec(decodeURIComponent(u.pathname));
-  if (urn) return `${BASE}/feed/update/urn:li:activity:${urn[1]}/`;
+  let path = u.pathname;
+  try {
+    path = decodeURIComponent(path);
+  } catch {
+    // keep the raw path
+  }
+  const urn = /urn:li:(activity|share|ugcPost):(\d{8,25})/i.exec(path);
+  if (urn) return `${BASE}/feed/update/urn:li:${urn[1]}:${urn[2]}/`;
   return `${BASE}${u.pathname}`;
 }
