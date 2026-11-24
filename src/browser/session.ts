@@ -124,13 +124,18 @@ export class BrowserSession {
 
   constructor(private readonly deps: SessionDeps) {}
 
-  /** Run `fn` with exclusive use of the browser. */
-  run<T>(fn: (nav: Nav) => Promise<T>): Promise<T> {
+  /**
+   * Run `fn` with exclusive use of the browser. `quiet` skips the breaker
+   * check and pacing; it is only for status checks that never navigate.
+   */
+  run<T>(fn: (nav: Nav) => Promise<T>, opts: { quiet?: boolean } = {}): Promise<T> {
     const task = this.queue.catch(() => undefined).then(async () => {
       this.clearIdle();
       try {
-        await this.deps.breaker.assertClosed();
-        await this.deps.pacer.betweenActions();
+        if (!opts.quiet) {
+          await this.deps.breaker.assertClosed();
+          await this.deps.pacer.betweenActions();
+        }
         const page = await this.ensurePage();
         return await fn(new Nav(page, this.deps));
       } finally {

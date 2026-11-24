@@ -205,6 +205,17 @@ async function closeComposer(nav: Nav): Promise<void> {
   }
 }
 
+/** For `doctor`: opens the composer, checks the editor and scheduler button exist, closes it. Types nothing. */
+export async function checkComposer(nav: Nav): Promise<{ editor: boolean; schedule_button: boolean }> {
+  await openComposer(nav);
+  try {
+    const schedule = await findOptional(nav.page, SEL.composer.scheduleButton, { timeout: 4000 });
+    return { editor: true, schedule_button: schedule !== null };
+  } finally {
+    await closeComposer(nav);
+  }
+}
+
 export async function listScheduled(nav: Nav): Promise<ScheduledPost[]> {
   await openComposer(nav);
   try {
