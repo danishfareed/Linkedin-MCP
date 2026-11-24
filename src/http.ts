@@ -10,7 +10,7 @@ import { createServer } from "./server.js";
 const HOST = "127.0.0.1";
 const MAX_BODY = 4 * 1024 * 1024;
 
-/** Uses the configured token, or creates one at ~/.linkedin-mcp/http-token (mode 600). */
+/** Uses the configured token, or creates one at <data folder>/http-token (mode 600). */
 export async function resolveHttpToken(ctx: AppContext): Promise<string> {
   if (ctx.config.http.token) return ctx.config.http.token;
   const file = ctx.config.paths.httpTokenFile;

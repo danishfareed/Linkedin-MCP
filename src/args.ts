@@ -114,7 +114,7 @@ Options
   --offline          doctor: skip the live LinkedIn checks
   --yes, -y          logout: skip the confirmation prompt
 
-Environment (overrides ~/.linkedin-mcp/config.json)
+Environment (overrides config.json in ~/.config/linkedin-mcp)
   LINKEDIN_MCP_HOME, LINKEDIN_MCP_HEADLESS, LINKEDIN_MCP_DRY_RUN,
   LINKEDIN_MCP_WORKING_HOURS (e.g. 08:00-21:00 or off), LINKEDIN_MCP_IDLE_TIMEOUT_MINUTES,
   LINKEDIN_MCP_CONFIRM_REACTIONS, LINKEDIN_MCP_BROWSER_CHANNEL, LINKEDIN_MCP_CHROME_PATH,

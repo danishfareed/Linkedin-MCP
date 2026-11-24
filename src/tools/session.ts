@@ -70,7 +70,7 @@ export const sessionTools = [
     name: "set_limits",
     title: "Change daily limits",
     description:
-      "Change daily caps. You can lower any cap freely and raise it up to its hard ceiling, never above. Saved to ~/.linkedin-mcp/config.json. Warm-up still halves caps for the first 14 days.",
+      "Change daily caps. You can lower any cap freely and raise it up to its hard ceiling, never above. Saved to config.json in the linkedin-mcp data folder. Warm-up still halves caps for the first 14 days.",
     input: limitShape,
     annotations: LOCAL,
     handler: async (args, ctx) => {

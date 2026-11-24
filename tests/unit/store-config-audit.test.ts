@@ -82,3 +82,13 @@ describe("AuditLog", () => {
     expect(recent[1]!.text_hash).toHaveLength(16);
   });
 });
+
+describe("default data folder", () => {
+  it("avoids ~/.linkedin-mcp and follows platform conventions", async () => {
+    const { defaultHome } = await import("../../src/config.js");
+    expect(defaultHome({ XDG_CONFIG_HOME: "/x/cfg" }, "linux")).toBe(join("/x/cfg", "linkedin-mcp"));
+    expect(defaultHome({}, "darwin")).toMatch(/\.config[\\/]linkedin-mcp$/);
+    expect(defaultHome({ LOCALAPPDATA: "C:\\Users\\a\\AppData\\Local" }, "win32")).toBe(join("C:\\Users\\a\\AppData\\Local", "linkedin-mcp"));
+    expect(defaultHome({}, "darwin")).not.toMatch(/\.linkedin-mcp/);
+  });
+});

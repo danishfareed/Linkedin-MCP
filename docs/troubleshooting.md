@@ -16,7 +16,7 @@ Every tool error has a `code`, a `message` and a `next_step`. Look up the code b
 |---|---|---|
 | `NOT_LOGGED_IN` | The automation browser has no LinkedIn session, or LinkedIn signed it out. | Run `npx @danishfareed/linkedin-mcp login` and sign in. |
 | `LIMIT_REACHED` | A daily or weekly safety cap is used up. | Wait for the reset time in the error. Check usage with the `get_limits` tool. Caps are never queued or bypassed. |
-| `OUTSIDE_WORKING_HOURS` | A write action was asked for outside your working hours (default 08:00–21:00 local). | Try later, or change `workingHours` in `~/.linkedin-mcp/config.json`. Reads work at any time. |
+| `OUTSIDE_WORKING_HOURS` | A write action was asked for outside your working hours (default 08:00–21:00 local). | Try later, or change `workingHours` in `~/.config/linkedin-mcp/config.json`. Reads work at any time. |
 | `CIRCUIT_OPEN` | Automation is paused, either by you or because LinkedIn showed a check. | See [Paused after a security check](#paused-after-a-security-check). |
 | `CHECKPOINT` | LinkedIn just showed a CAPTCHA, security check, "unusual activity" or restriction page. Everything is now paused for 24 hours. | Don't retry. See below. |
 | `SELECTOR_BROKEN` | A page element wasn't found, usually because LinkedIn changed its layout. | Run `doctor` and [report it](https://github.com/danishfareed/Linkedin-MCP/issues/new?template=broken-selector.yml) with the selector name from the error. |
@@ -41,7 +41,7 @@ If the pause was only because LinkedIn signed you out, signing in again with `lo
 ## Browser won't start
 
 - **"No usable browser was found"**: install [Google Chrome](https://www.google.com/chrome/), or run `npx patchright install chromium` to download the bundled Chromium.
-- **"The LinkedIn browser profile is already open in another process"**: only one process can use the profile at a time. Close the `login` window, or quit other MCP clients that are running linkedin-mcp, then retry. If nothing else is running, a crashed Chrome may have left a lock: reboot, or delete `~/.linkedin-mcp/profile/SingletonLock`.
+- **"The LinkedIn browser profile is already open in another process"**: only one process can use the profile at a time. Close the `login` window, or quit other MCP clients that are running linkedin-mcp, then retry. If nothing else is running, a crashed Chrome may have left a lock: reboot, or delete `~/.config/linkedin-mcp/profile/SingletonLock`.
 - **Custom Chrome location**: set `LINKEDIN_MCP_CHROME_PATH=/path/to/chrome`, or `LINKEDIN_MCP_BROWSER_CHANNEL=chromium` to always use the bundled browser.
 
 ## Login window closes or sign-in never finishes
@@ -62,7 +62,7 @@ If the pause was only because LinkedIn signed you out, signing in again with `lo
 
 ## Where things are stored
 
-Everything lives in `~/.linkedin-mcp/` (override with `LINKEDIN_MCP_HOME`):
+Everything lives in one folder: `~/.config/linkedin-mcp/` on macOS and Linux (`$XDG_CONFIG_HOME/linkedin-mcp` if you set that), `%LOCALAPPDATA%\linkedin-mcp` on Windows. Set `LINKEDIN_MCP_HOME` to use another folder. `npx @danishfareed/linkedin-mcp status` prints the one in use.
 
 | Path | Contents |
 |---|---|

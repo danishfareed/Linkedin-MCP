@@ -260,7 +260,7 @@ export function assertWorkingHours(hours: Config["workingHours"], now: Date): vo
   throw new LinkedInMcpError(
     "OUTSIDE_WORKING_HOURS",
     `Write actions only run between ${hours.start} and ${hours.end} local time.`,
-    `Try again after ${formatLocal(next)}, or change workingHours in ~/.linkedin-mcp/config.json.`,
+    `Try again after ${formatLocal(next)}, or change workingHours in config.json (run \`npx @danishfareed/linkedin-mcp status\` to see where it is).`,
     { working_hours: hours, next_window_starts_at: next.toISOString() },
   );
 }

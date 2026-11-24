@@ -17,8 +17,18 @@ export interface Paths {
   httpTokenFile: string;
 }
 
+/**
+ * Default data folder: ~/.config/linkedin-mcp (or $XDG_CONFIG_HOME/linkedin-mcp),
+ * and %LOCALAPPDATA%\linkedin-mcp on Windows. Deliberately not ~/.linkedin-mcp,
+ * which another LinkedIn MCP server uses and deletes on sign-out.
+ */
+export function defaultHome(env: NodeJS.ProcessEnv = process.env, platform: NodeJS.Platform = process.platform): string {
+  if (platform === "win32") return join(env.LOCALAPPDATA?.trim() || join(homedir(), "AppData", "Local"), "linkedin-mcp");
+  return join(env.XDG_CONFIG_HOME?.trim() || join(homedir(), ".config"), "linkedin-mcp");
+}
+
 export function resolvePaths(env: NodeJS.ProcessEnv = process.env): Paths {
-  const home = env.LINKEDIN_MCP_HOME?.trim() || join(homedir(), ".linkedin-mcp");
+  const home = env.LINKEDIN_MCP_HOME?.trim() || defaultHome(env);
   const state = join(home, "state");
   return {
     home,
@@ -136,7 +146,7 @@ export function readFileConfig(paths: Paths): FileConfig {
   return parsed.data;
 }
 
-/** Env vars win over ~/.linkedin-mcp/config.json, which wins over defaults. */
+/** Env vars win over config.json in the data folder, which wins over defaults. */
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const paths = resolvePaths(env);
   const file = readFileConfig(paths);

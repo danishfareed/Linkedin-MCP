@@ -12,3 +12,4 @@ First release.
 - Guard that pauses everything for 24 hours when LinkedIn shows a security check.
 - Append-only audit log of write actions.
 - CLI: `serve` (stdio or local HTTP), `login`, `status`, `doctor`, `resume`, `logout`.
+- Data lives in `~/.config/linkedin-mcp` (`%LOCALAPPDATA%\linkedin-mcp` on Windows), kept apart from other LinkedIn MCP servers that use `~/.linkedin-mcp`.
