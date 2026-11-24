@@ -1,0 +1,34 @@
+{
+  "good_story": {
+    "context": { "funnel_stage": "TOF", "method": "story" },
+    "text": "We lost our biggest client in March 2025. It was 38% of revenue.\n\nI spent the first week refreshing my inbox, hoping they'd change their mind.\n\nThey didn't.\n\nSo we did three unglamorous things:\n\n1. Called our 12 smallest customers and asked what they'd pay more for.\n2. Raised prices on the plan nobody complained about.\n3. Cut the two features only that client used.\n\nNine months later, revenue is up 21% and no single customer is above 9%.\n\nThe lesson I keep relearning: concentration feels like safety until the day it isn't.\n\nIf one client left you tomorrow, what would you change first?"
+  },
+  "good_howto": {
+    "context": { "funnel_stage": "MOF", "method": "how-to" },
+    "text": "Your pricing page loses buyers at the comparison table.\n\nWe tested 4 versions with Northwind's sales team over 6 weeks. The one that won had fewer columns, not more.\n\nWhat changed:\n\n1. Three plans instead of five. Demo requests went from 41 to 63 a month.\n2. One line per plan saying who it's for, before any feature.\n3. Annual price shown first, monthly in small text below.\n4. The enterprise column replaced by a single 'Talk to us' link.\n\nNone of this is clever. It just removes the moment where a buyer has to do maths.\n\nI wrote up the full test, with the before and after screenshots, as a 9-page guide.\n\nComment PRICING and I'll send it over."
+  },
+  "bof_offer": {
+    "context": { "funnel_stage": "BOF", "method": "case study" },
+    "text": "Acme Logistics cut onboarding from 14 days to 3.\n\nTheir ops lead, Priya, had tried two tools and a consultant before we spoke in August.\n\nThe fix wasn't software. It was a 40-minute call to map the first week, then removing 6 of the 11 steps.\n\nIf your new customers take more than a week to see value, that's usually where the money leaks.\n\nI have 3 audit slots left in December. Book a 20-minute call through the link on my profile."
+  },
+  "ai_slop": {
+    "context": { "funnel_stage": "TOF" },
+    "text": "In today's fast-paced world, leadership is evolving — and it's more important than ever.\n\nLet's delve into what truly matters.\n\nIt's not about titles. It's about trust.\n\n🚀 Be authentic\n💡 Be curious\n🔥 Be bold\n✅ Be consistent\n🙌 Be kind\n\nGreat leaders foster growth, harness the power of empathy, and unlock their team's full potential — every single day.\n\nLet that sink in.\n\nHere's the thing — the best leaders never stop learning.\n\n#leadership #growth #mindset #success #motivation #careers"
+  },
+  "throat_clearing_wall": {
+    "context": {},
+    "text": "I'm thrilled to announce that after a long and winding journey through many different roles and responsibilities over the years, I have finally decided to take on a brand new challenge that I believe will help me grow both personally and professionally, and I wanted to take a moment to share some of the things that I have learned along the way, because I think that there are a lot of really important lessons that could be very useful to people who are going through similar transitions in their own careers, especially when it comes to understanding how to navigate uncertainty and how to make decisions when you do not have all of the information that you might want to have in an ideal world."
+  },
+  "bait": {
+    "context": { "funnel_stage": "TOF" },
+    "text": "Remote work is here to stay.\n\nTeams that went fully remote in 2023 hired from 4x more cities.\n\nLike if you agree!\n\nComment YES below and tag 3 friends who need to see this."
+  },
+  "link_in_body": {
+    "context": { "funnel_stage": "MOF" },
+    "text": "We published our 2026 salary report for 1,200 product designers across 14 countries.\n\nTwo surprises: London pays less than Berlin for senior roles, and contractors out-earn employees by 31%.\n\nFull data here: https://example.com/salary-report-2026\n\nWhat number surprised you most?"
+  },
+  "hashtag_heavy": {
+    "context": {},
+    "text": "Shipped our 3rd release this quarter, 2 weeks early.\n\nThe trick was cutting scope on day one, not day ten.\n\nWhat did you cut this month?\n\n#product #engineering #startups #saas #agile"
+  }
+}
