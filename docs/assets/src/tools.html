@@ -11,7 +11,7 @@
   .legend span { display: inline-flex; align-items: center; gap: 10px; }
 
   .cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 48px; margin-top: 32px; }
-  .group + .group { margin-top: 34px; }
+  .group + .group { margin-top: 30px; }
   .group h3 { font-size: 22px; font-weight: 700; letter-spacing: -0.015em; }
   .group h3 small { font-size: 16px; font-weight: 500; color: var(--muted); margin-left: 6px; }
   .group p { margin-top: 4px; font-size: 16px; color: var(--muted); line-height: 1.4; }
@@ -41,9 +41,9 @@
 <body>
 <div class="frame grid-bg" id="shot">
   <div class="legend">
-    <span><i class="m send"></i>Sends something. Returns a preview you approve first.</span>
-    <span><i class="m read"></i>Reads from LinkedIn</span>
-    <span><i class="m local"></i>Stays on your computer</span>
+    <span><i class="m send"></i>Sends something, after your approval</span>
+    <span><i class="m read"></i>Reads LinkedIn</span>
+    <span><i class="m local"></i>Runs on your computer</span>
   </div>
 
   <div class="cols">
@@ -72,6 +72,14 @@
           <li><i class="m read"></i>search_companies</li>
         </ul>
       </div>
+      <div class="group">
+        <h3>Jobs<small>3</small></h3>
+        <ul>
+          <li><i class="m read"></i>search_jobs</li>
+          <li><i class="m read"></i>get_job_details</li>
+          <li><i class="m read"></i>get_saved_jobs</li>
+        </ul>
+      </div>
     </div>
 
     <div>
@@ -98,21 +106,37 @@
           <li><i class="m send"></i>send_message</li>
         </ul>
       </div>
+      <div class="group">
+        <h3>Visuals<small>5</small></h3>
+        <ul>
+          <li><i class="m local"></i>generate_image</li>
+          <li><i class="m local"></i>create_quote_card</li>
+          <li><i class="m local"></i>create_carousel</li>
+          <li><i class="m local"></i>list_media</li>
+          <li><i class="m local"></i>image_providers</li>
+        </ul>
+      </div>
     </div>
 
     <div>
       <div class="group">
-        <h3>Jobs<small>3</small></h3>
+        <h3>Growth<small>7</small></h3>
         <ul>
-          <li><i class="m read"></i>search_jobs</li>
-          <li><i class="m read"></i>get_job_details</li>
-          <li><i class="m read"></i>get_saved_jobs</li>
+          <li><i class="m local"></i>growth_profile</li>
+          <li><i class="m local"></i>growth_strategy</li>
+          <li><i class="m local"></i>growth_ideas</li>
+          <li><i class="m local"></i>growth_calendar</li>
+          <li><i class="m local"></i>review_post</li>
+          <li><i class="m read"></i>growth_report</li>
+          <li><i class="m local"></i>get_playbook</li>
         </ul>
       </div>
       <div class="group">
-        <h3>Session and safety<small>9</small></h3>
+        <h3>Session and safety<small>11</small></h3>
         <ul>
           <li class="key"><i class="m go"></i>confirm_action</li>
+          <li class="key"><i class="m go"></i>confirm_batch</li>
+          <li><i class="m local"></i>batch_status</li>
           <li><i class="m local"></i>cancel_action</li>
           <li><i class="m local"></i>session_status</li>
           <li><i class="m local"></i>connect_linkedin_api</li>
@@ -123,7 +147,7 @@
           <li><i class="m local"></i>resume</li>
         </ul>
       </div>
-      <div class="note"><b class="mono">confirm_action</b> is the only way anything gets sent. It takes the single-use token from a preview, after you say yes.</div>
+      <div class="note"><b class="mono">confirm_action</b> and <b class="mono">confirm_batch</b> are the only ways anything gets sent. They take single-use tokens from previews, after you say yes.</div>
     </div>
   </div>
 </div>

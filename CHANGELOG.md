@@ -8,11 +8,25 @@ First release.
 
 ### Tools
 
-- 39 MCP tools for posting, scheduling, analytics, comments, reactions, notifications, research, jobs, invitations and messaging.
+- 53 MCP tools for posting, scheduling, analytics, comments, reactions, notifications, research, jobs, invitations and messaging.
 - Jobs: `search_jobs` (date posted, on-site/remote/hybrid, experience level, Easy Apply), `get_job_details` and `get_saved_jobs`. Read-only; linkedin-mcp never applies to jobs.
 - `get_person_posts` and `get_company_posts` for someone's recent posts.
 - `search_posts` can sort newest first and filter by photos, videos or documents.
 - Every list tool returns `complete` and a `note` when a list may be partial, instead of returning an empty list when the page wasn't recognised.
+
+### Growth system
+
+- A local brand book (`growth_profile`), versioned strategy with explicit approval (`growth_strategy`), idea bank (`growth_ideas`) and content calendar (`growth_calendar`), stored owner-only in the data folder.
+- `review_post`: a deterministic, explainable draft checker (hook and fold, readability, length, specificity, AI tells, hashtags, links, engagement bait, CTA, banned phrases, repeated openings), with every threshold labelled by its basis.
+- `growth_report`: analytics history and insights (engagement and comment rates, best pillars, formats and posting times, KPI progress) that refuse to overclaim on small samples.
+- `get_playbook`, `linkedin-mcp://playbook/*` resources and eight MCP prompts (start_growth_strategy, plan_my_week, write_post, engagement_session, profile_audit, monthly_growth_review, repurpose_post, reply_to_comments), backed by about 24,000 words of sourced material on distribution, psychology, hooks, formats, strategy, profile, engagement, writing and measurement.
+- `confirm_batch` and `batch_status`: approve a planned week in one sitting, with a box per item in clients that support dialogs. Scheduled posts count against the cap of the day they publish.
+
+### Visuals
+
+- `create_quote_card` and `create_carousel` render branded images and PDF carousels on your computer, in a throwaway browser separate from your LinkedIn profile.
+- `generate_image` works with Higgsfield, OpenAI, Google Gemini, fal.ai, Replicate or Ideogram using your own key. Downloads are limited to public HTTPS hosts, pinned to the checked address and checked for a real image signature.
+- Uploads are allowed from the data folder's `media` directory only.
 
 ### Official API posting (optional)
 

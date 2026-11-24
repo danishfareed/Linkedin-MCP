@@ -5,7 +5,7 @@
 <h1 align="center">LinkedIn MCP Server</h1>
 
 <p align="center"><b>Free, open-source LinkedIn automation for Claude, Cursor and any AI agent.</b><br>
-Post, schedule, read your analytics, reply to comments, search jobs and research people from your AI assistant, with your approval before anything is sent.</p>
+Build a strategy, plan your week, write and design posts, schedule them, and learn from your analytics, all from your AI assistant, with your approval before anything is sent.</p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@danishfareed/linkedin-mcp"><img alt="npm" src="https://img.shields.io/npm/v/@danishfareed/linkedin-mcp?color=1f6feb"></a>
@@ -17,13 +17,14 @@ Post, schedule, read your analytics, reply to comments, search jobs and research
 <p align="center">
   <a href="#quick-start">Quick start</a> &nbsp;·&nbsp;
   <a href="#what-you-can-ask">What you can ask</a> &nbsp;·&nbsp;
+  <a href="#grow-not-just-post">Growth</a> &nbsp;·&nbsp;
   <a href="#tools">Tools</a> &nbsp;·&nbsp;
   <a href="#safety">Safety</a> &nbsp;·&nbsp;
   <a href="docs/clients.md">Client setup</a> &nbsp;·&nbsp;
   <a href="#faq">FAQ</a>
 </p>
 
-**LinkedIn MCP** is a [Model Context Protocol](https://modelcontextprotocol.io) server that lets your AI assistant run **your own** LinkedIn account. Ask Claude, Cursor, VS Code or any MCP client to draft and publish posts, **schedule LinkedIn posts** with LinkedIn's own scheduler, read your **LinkedIn analytics**, answer comments, keep up with notifications and messages, search jobs, and look up people and companies. It's built for creators, founders and job seekers, and it runs on your computer through a real Chrome browser that you sign in to yourself. No API keys, no paid service, no password stored.
+**LinkedIn MCP** is a [Model Context Protocol](https://modelcontextprotocol.io) server that lets your AI assistant run **your own** LinkedIn account. Ask Claude, Cursor, VS Code or any MCP client to draft and publish posts, **schedule LinkedIn posts** with LinkedIn's own scheduler, read your **LinkedIn analytics**, answer comments, keep up with notifications and messages, search jobs, and look up people and companies. It's also a complete growth system: it keeps your brand book and strategy, plans a content calendar, checks your drafts against proven methods, makes images and carousels, and learns from your real analytics. It's built for creators, founders and job seekers, and it runs on your computer through a real Chrome browser that you sign in to yourself. No API keys, no paid service, no password stored.
 
 <p align="center">
   <img src="docs/assets/demo.gif" alt="Animated example: the user asks for a scheduled post, the assistant shows a preview, the user approves, and the post is scheduled on LinkedIn." width="100%">
@@ -31,6 +32,8 @@ Post, schedule, read your analytics, reply to comments, search jobs and research
 
 ## Why it's different
 
+- **It's a growth system, not just a poster.** It interviews you, keeps a strategy and content calendar, scores drafts with an explainable checker, draws on a sourced playbook of methods and psychology, and reports which pillars, formats and posting times actually work for you.
+- **It makes the visuals.** Branded quote cards and PDF carousels rendered on your computer for free, and AI images through Higgsfield, OpenAI, Gemini, fal, Replicate or Ideogram with your own key.
 - **It does the things creators actually do.** Publish and schedule posts (text, images, PDF carousels), read post and profile analytics, reply to comments, react, manage invitations and messages. Most LinkedIn MCP servers only read.
 - **You approve every send.** Each post, comment, reaction, message or invitation comes back as a preview first. In clients that support it, you approve in a dialog the AI can't click for you.
 - **It tells you what really happened.** After sending, it checks LinkedIn and reports `sent`, `unconfirmed` (don't retry) or `not_sent` (safe to retry), instead of assuming the click worked.
@@ -123,6 +126,30 @@ Good to know:
 
 Everything runs on your computer. linkedin-mcp drives a real Chrome window with your own saved session, one action at a time. Nothing leaves your machine except the browser's normal traffic to LinkedIn: no telemetry, no hosted component.
 
+## Grow, not just post
+
+<details open>
+<summary><b>The weekly loop</b></summary>
+
+```
+ You (once)          Your assistant, every week                          You
+ ──────────          ──────────────────────────                          ───
+ brand book  ─►  strategy ─► ideas ─► calendar ─► drafts ─► visuals ─►  approve the week
+                    ▲                                                        │
+                    └──────────── growth_report (what worked) ◄── LinkedIn ◄─┘
+```
+
+</details>
+
+1. **"Interview me and build my LinkedIn strategy."** Your assistant asks about you, your audience, offer, goals and proof in small batches, saves it all in a local brand book, and drafts a strategy: positioning, content pillars, funnel mix, cadence and KPIs. You approve it.
+2. **"Plan my week."** It turns the strategy and idea bank into a calendar, drafts each post with a method and hook from the playbook, runs every draft through `review_post`, and makes a carousel or image where it helps.
+3. **Approve the week in one sitting.** Every post has its own preview. In clients with dialogs you tick each one, and LinkedIn's own scheduler publishes them, even with your computer off.
+4. **"Review my month."** `growth_report` reads your analytics, keeps a history, and tells you what's working, with honest confidence levels on small samples. The strategy adapts.
+
+Clients that show MCP prompts list these as `start_growth_strategy`, `plan_my_week`, `write_post`, `engagement_session`, `profile_audit`, `monthly_growth_review`, `repurpose_post` and `reply_to_comments`. The playbook behind them is about 24,000 words of sourced material: how LinkedIn distributes posts (every claim labelled by evidence), persuasion psychology, 48 hooks, 28 post formats, strategy, profile, engagement, writing and measurement.
+
+Full guide, including image provider setup and brand settings: **[docs/growth.md](docs/growth.md)**.
+
 ## What you can ask
 
 **Posting and scheduling**
@@ -139,6 +166,12 @@ Everything runs on your computer. linkedin-mcp drives a real Chrome window with 
 - "Summarise the comments on my latest post and draft a reply to each question."
 - "What's new in my notifications? Anything I should respond to?"
 - "Find posts from this week about MCP servers, newest first, and suggest three I could add something useful to."
+
+**Strategy and visuals**
+- "Interview me and build my LinkedIn strategy. My goal is 20 qualified leads a quarter."
+- "Score this draft and fix whatever fails."
+- "Turn my last post into a 6-slide carousel in my brand colors."
+- "Generate a header image for Thursday's post with Higgsfield."
 
 **Jobs, research and network**
 - "Find remote senior product designer roles posted this week and summarise the three best fits."
@@ -228,6 +261,34 @@ linkedin-mcp never applies to jobs for you.
 </details>
 
 <details>
+<summary><b>Growth</b></summary>
+
+| Tool | What it does | Type |
+|---|---|---|
+| `growth_profile` | Your brand book: role, offer, audience, goals, proof bank, voice, banned phrases, brand visuals. Says what's missing. | Local |
+| `growth_strategy` | Draft, approve (only when you say so) or archive your strategy: pillars, funnel mix, cadence, formats, KPIs. Versioned, with a readable `strategy.md`. | Local |
+| `growth_ideas` | The idea bank: thesis, pillar, funnel stage, method, hooks, evidence, source. | Local |
+| `growth_calendar` | Dated slots from your cadence with drafts and media. Ready slots carry the input for `schedule_post`. Never schedules by itself. | Local |
+| `review_post` | Explainable draft score: hook and fold, readability, length, specificity, AI tells, hashtags, links, engagement bait, CTA, your banned phrases, repeated openings. | Local |
+| `growth_report` | Reads your posts and analytics, keeps a history, ranks pillars, formats and posting times, tracks KPIs. | Reads |
+| `get_playbook` | Sourced methods, hooks, psychology and strategy, by topic or search. | Local |
+
+</details>
+
+<details>
+<summary><b>Visuals</b></summary>
+
+| Tool | What it does | Type |
+|---|---|---|
+| `create_quote_card` | Branded quote image, rendered on your computer. | Local |
+| `create_carousel` | Branded PDF carousel (3–15 slides) with PNG previews, ready for `create_post`. | Local |
+| `generate_image` | AI image through Higgsfield, OpenAI, Gemini, fal, Replicate or Ideogram, with your own key (may cost money). | Calls your provider |
+| `list_media` | Recent generated files. | Local |
+| `image_providers` | Which providers are set up, and how to set up the others. | Local |
+
+</details>
+
+<details>
 <summary><b>Session and safety</b></summary>
 
 | Tool | What it does |
@@ -238,6 +299,8 @@ linkedin-mcp never applies to jobs for you.
 | `get_audit_log` | Recent write actions, guard trips and pauses. |
 | `pause` / `resume` | Stop all LinkedIn activity (optionally for N minutes) and start it again. |
 | `confirm_action` | Run a previewed action with its token, after you approve. |
+| `confirm_batch` | Approve up to 10 previewed scheduled posts, comments, replies or reactions together (for example a planned week). In clients with dialogs you tick each one. |
+| `batch_status` | Results of a batch, item by item. |
 | `cancel_action` | Throw away a preview's token. |
 | `connect_linkedin_api` | Optional: connect your own LinkedIn developer app so posts publish through the official API. Opens LinkedIn's consent page. |
 
@@ -319,6 +382,10 @@ The best-known open-source alternative is [stickerdaniel/linkedin-mcp-server](ht
 | Post and profile analytics | Yes | No |
 | Comment, reply and react | Yes | No |
 | Notifications and invitation management | Yes | No |
+| Strategy, idea bank, content calendar, analytics feedback loop | Yes | No |
+| Draft checker and sourced growth playbook | Yes | No |
+| Branded carousels and quote cards, AI images | Yes | No |
+| Approve a planned week in one sitting | Yes | No |
 | Feed, post search, profiles, companies, people search | Yes | Yes |
 | A person's and a company's posts | Yes | Yes |
 | Job search, job details, saved jobs | Yes | Yes, plus apply links and Easy Apply forms |
@@ -366,6 +433,8 @@ Settings come from environment variables (set them under `env` in your client's 
 | `LINKEDIN_MCP_PORT` | `3333` | Port for `--http` mode. |
 | `LINKEDIN_MCP_HTTP_TOKEN` | generated | Bearer token for `--http` mode. |
 
+Image providers (`OPENAI_API_KEY`, `HF_API_KEY_ID` and `HF_API_KEY_SECRET` for Higgsfield, and others) and brand settings (`LINKEDIN_MCP_BRAND_THEME`, colors, font, logo) are listed in [docs/growth.md](docs/growth.md#visuals).
+
 Example `~/.config/linkedin-mcp/config.json`:
 
 ```json
@@ -402,6 +471,13 @@ Other options: `--headed` (show the browser while serving), `--dry-run`, `--port
 <summary><b>Will my account get banned?</b></summary>
 
 It can happen. LinkedIn's User Agreement prohibits automated access, and LinkedIn does restrict accounts it thinks are automated. linkedin-mcp is built to keep the risk down: a real browser you signed in to yourself, one thing at a time at a human pace, conservative daily and weekly caps, halved caps for the first two weeks, working hours, and a full stop the moment LinkedIn shows a warning or starts rate-limiting. It doesn't hide what it is or try to beat detection. There's no guarantee. Don't use it on an account you can't afford to lose.
+
+</details>
+
+<details>
+<summary><b>Can it run my LinkedIn on autopilot?</b></summary>
+
+Almost. Your assistant does the strategy, ideas, calendar, drafts, checks and visuals, and LinkedIn's scheduler publishes. The one thing it won't do is send without you: you approve each post, usually a whole week in one sitting with `confirm_batch`. Accounts that post without their owner are what LinkedIn restricts, and keeping you in the loop also means a post or message written to manipulate your assistant can't get anything sent.
 
 </details>
 
