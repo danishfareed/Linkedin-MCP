@@ -6,7 +6,7 @@ import { type AppContext, VERSION, withBrowser } from "./context.js";
 import { toMcpError } from "./errors.js";
 import { compareVersions } from "./util/version.js";
 import { checkComposer } from "./linkedin/pages/composer.js";
-import { readFeed } from "./linkedin/pages/feed.js";
+import { readFeedPosts } from "./linkedin/pages/feed.js";
 import { listInvitations, readInbox, readNotifications, readProfileAnalytics } from "./linkedin/pages/lists.js";
 import { readMyProfile } from "./linkedin/pages/profile.js";
 
@@ -31,10 +31,12 @@ const LIVE_PROBES: Probe[] = [
   {
     name: "Feed",
     run: async (ctx) => {
-      const posts = await withBrowser(ctx, (nav) => readFeed(nav, 3));
+      const { posts, note } = await withBrowser(ctx, (nav) => readFeedPosts(nav, 3));
       const withText = posts.filter((p) => p.text).length;
-      if (!posts.length) return { level: "fail", detail: "No posts found (feedPost selectors)." };
-      return { level: withText ? "ok" : "warn", detail: `${posts.length} posts read, ${withText} with text.` };
+      const withLink = posts.filter((p) => p.url).length;
+      if (!posts.length) return { level: "fail", detail: note ?? "No posts found (feedPost selectors)." };
+      const detail = `${posts.length} posts read, ${withText} with text, ${withLink} with a link.${note ? ` ${note}` : ""}`;
+      return { level: withText && withLink ? "ok" : "warn", detail };
     },
   },
   {

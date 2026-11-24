@@ -44,11 +44,6 @@ export async function readFeedPosts(nav: Nav, limit: number): Promise<PostList> 
   return collectPosts(nav, limit, { name: "feed posts" });
 }
 
-/** @deprecated Use readFeedPosts, which also reports whether the list is complete. Kept for `doctor`. */
-export async function readFeed(nav: Nav, limit: number): Promise<Post[]> {
-  return (await readFeedPosts(nav, limit)).posts;
-}
-
 export async function searchPosts(nav: Nav, keywords: string, opts: PostSearchOptions, limit: number): Promise<PostList> {
   await nav.goto(searchPostsUrl(keywords, opts));
   return collectPosts(nav, limit, { name: "matching posts" });
