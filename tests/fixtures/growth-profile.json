@@ -1,0 +1,56 @@
+{
+  "identity": {
+    "name": "Jane Doe",
+    "headline": "Fractional COO for B2B SaaS | Onboarding and retention",
+    "role": "Fractional COO",
+    "company": "Northwind Ops",
+    "location": "London",
+    "bio": "Ran operations at two SaaS companies from seed to Series B. Now helps founders fix onboarding and churn."
+  },
+  "offer": {
+    "description": "A 4-week onboarding and retention sprint for B2B SaaS founders at 1-10M ARR.",
+    "outcome": "Customers reach first value in days, not weeks.",
+    "call_to_action": "Book a 20-minute onboarding audit"
+  },
+  "audience": {
+    "who": "Founders and heads of customer success at B2B SaaS companies with 1-10M ARR.",
+    "roles": ["Founder", "Head of Customer Success"],
+    "pains": ["New customers take weeks to see value", "Churn spikes after month 3", "Onboarding depends on one heroic CSM"],
+    "desires": ["Predictable net revenue retention", "Onboarding that scales without hiring"],
+    "objections": ["We tried a consultant before", "Our product is too complex to standardise"]
+  },
+  "goals": [
+    { "type": "leads", "description": "Four qualified audit calls a month from LinkedIn", "metric": "audit calls per month", "target": 4, "baseline": 1, "due": "2027-03-31" },
+    { "type": "followers", "description": "Grow to 6,000 followers", "metric": "followers", "target": 6000, "baseline": 4812, "due": "2027-06-30" }
+  ],
+  "proof_bank": [
+    { "kind": "case_study", "title": "Acme Logistics onboarding 14 days to 3", "detail": "Removed 6 of 11 onboarding steps after a 40-minute mapping call.", "date": "2026-08", "source": "Client email, shareable with name" },
+    { "kind": "number", "title": "Net revenue retention 92% to 114%", "date": "2024", "source": "Board deck at previous company" },
+    { "kind": "story", "title": "Lost our biggest client (38% of revenue)", "date": "2025-03", "source": "own experience" },
+    { "kind": "win", "title": "Cut churn 31% in two quarters", "date": "2023", "source": "Company dashboard" },
+    { "kind": "testimonial", "title": "Priya at Acme: 'first week went from chaos to a checklist'", "date": "2026-09", "source": "LinkedIn recommendation" }
+  ],
+  "voice": {
+    "samples": [
+      "Most onboarding problems are sequencing problems. Fix the order before you add tools.",
+      "We lost a client that was 38% of revenue. Here's what we changed in the following nine months.",
+      "If your best CSM is on holiday, does onboarding still work? That's the test."
+    ],
+    "tone_words": ["direct", "practical", "warm"],
+    "phrases_used": ["first value", "the boring fix"],
+    "banned_words": ["synergy", "leverage"],
+    "banned_phrases": ["let's circle back"]
+  },
+  "topics_to_avoid": ["politics", "former employer's clients"],
+  "posting_constraints": {
+    "hours_per_week": 4,
+    "days": ["mon", "tue", "wed", "thu", "fri"],
+    "time_windows": [{ "start": "08:00", "end": "10:00" }],
+    "max_posts_per_week": 3
+  },
+  "visuals": {
+    "colors": { "primary": "#0A66C2", "accent": "#F5B700", "background": "#FFFFFF", "text": "#1B1F23" },
+    "fonts": { "heading": "Inter", "body": "Inter" },
+    "headshot_path": "/Users/example/Pictures/headshot.jpg"
+  }
+}
