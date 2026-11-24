@@ -1,0 +1,70 @@
+{
+  "name": "@danishfareed/linkedin-mcp",
+  "version": "0.1.0",
+  "description": "LinkedIn MCP server: free, open-source LinkedIn automation for Claude, Cursor and any AI agent. Post, schedule, read analytics, reply to comments and research profiles from your AI assistant, safely.",
+  "license": "Apache-2.0",
+  "author": "Danish Fareed",
+  "homepage": "https://github.com/danishfareed/Linkedin-MCP#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danishfareed/Linkedin-MCP.git"
+  },
+  "bugs": {
+    "url": "https://github.com/danishfareed/Linkedin-MCP/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "linkedin",
+    "linkedin-mcp",
+    "linkedin-automation",
+    "linkedin-scheduler",
+    "linkedin-analytics",
+    "claude",
+    "cursor",
+    "ai-agent",
+    "patchright",
+    "playwright"
+  ],
+  "type": "module",
+  "bin": {
+    "linkedin-mcp": "dist/cli.js"
+  },
+  "main": "dist/server.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "mcpName": "io.github.danishfareed/linkedin-mcp",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "smoke": "tsx scripts/smoke.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "patchright": "^1.64.3",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^20.19.43",
+    "eslint": "^9.39.5",
+    "globals": "^17.14.0",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9",
+    "typescript-eslint": "^8.74.0",
+    "vitest": "^3.2.7"
+  }
+}
