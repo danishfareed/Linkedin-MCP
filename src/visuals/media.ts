@@ -50,11 +50,6 @@ export async function saveMedia(mediaDir: string, now: Date, name: string, ext: 
   throw new Error(`Could not find a free file name for ${base}${ext} in ${dir}`);
 }
 
-/** A path for a file that a renderer writes itself (PDFs, screenshots). Reserves the name by creating it empty. */
-export async function reserveMediaPath(mediaDir: string, now: Date, name: string, ext: string): Promise<string> {
-  return saveMedia(mediaDir, now, name, ext, Buffer.alloc(0));
-}
-
 const KINDS: Record<string, "image" | "document"> = { ".png": "image", ".jpg": "image", ".jpeg": "image", ".gif": "image", ".pdf": "document" };
 
 export interface MediaFile {
