@@ -1,0 +1,69 @@
+{
+  "main_sections": [
+    {
+      "urn": null,
+      "depth": 0,
+      "text": "Experience\nExperience\nShow all 14 experiences",
+      "links": [
+        { "href": "https://www.linkedin.com/company/litware/", "text": "Litware", "label": null },
+        { "href": "https://www.linkedin.com/in/taylor-brooks/details/experience?profileUrn=urn%3Ali%3Afsd_profile%3AACoAA0001", "text": "Show all 14 experiences", "label": null }
+      ],
+      "labels": [],
+      "fields": { "heading": "Experience", "about": null },
+      "attrs": { "anchor": "experience" },
+      "items": [
+        "VP Marketing\nLitware · Full-time\nMar 2022 - Present · 2 yrs 9 mos",
+        "Head of Growth\nAdventure Works\n2018 - 2022 · 4 yrs",
+        "Growth Lead\nProseware\n2016 - 2018 · 2 yrs"
+      ]
+    },
+    {
+      "urn": null,
+      "depth": 0,
+      "text": "Education\nEducation",
+      "links": [],
+      "labels": [],
+      "fields": { "heading": "Education" },
+      "attrs": { "anchor": "education" },
+      "items": ["University of Leeds\nBA, Economics\n2011 - 2014"]
+    },
+    {
+      "urn": null,
+      "depth": 0,
+      "text": "Skills\nSkills\nShow all 37 skills",
+      "links": [{ "href": "https://www.linkedin.com/in/taylor-brooks/details/skills/", "text": "Show all 37 skills", "label": null }],
+      "labels": [],
+      "fields": { "heading": "Skills" },
+      "attrs": { "anchor": "skills" },
+      "items": ["Demand Generation", "Positioning"]
+    }
+  ],
+  "details_sections": [
+    {
+      "urn": null,
+      "depth": 0,
+      "text": "Experience",
+      "links": [],
+      "labels": [],
+      "fields": { "heading": "Experience", "about": null },
+      "attrs": { "anchor": null },
+      "items": [
+        "VP Marketing\nLitware · Full-time\nMar 2022 - Present · 2 yrs 9 mos",
+        "Head of Growth\nAdventure Works\n2018 - 2022 · 4 yrs",
+        "Growth Lead\nProseware\n2016 - 2018 · 2 yrs",
+        "Marketing Manager\nTailspin Toys\n2014 - 2016 · 2 yrs",
+        "Marketing Associate\nNorthwind Traders\n2012 - 2014 · 2 yrs"
+      ]
+    },
+    {
+      "urn": null,
+      "depth": 0,
+      "text": "More profiles for you",
+      "links": [],
+      "labels": [],
+      "fields": { "heading": "More profiles for you", "about": null },
+      "attrs": { "anchor": null },
+      "items": []
+    }
+  ]
+}

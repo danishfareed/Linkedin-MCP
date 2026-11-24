@@ -233,75 +233,97 @@ export const SEL = {
     ),
   },
 
+  // Profile actions are always looked up inside the top card (see TOP_CARD in
+  // anchors.ts), never page-wide, so a sidebar "Connect" or "Message <someone
+  // else>" can't be picked.
   profile: {
     connect: entry(
       "profile.connect",
+      { css: "a[href*='/preload/custom-invite/']" },
       { role: "button", name: /^invite .+ to connect$/i },
-      { css: "main section button[aria-label^='Invite'][aria-label$='to connect']" },
+      { css: "button[aria-label^='Invite'][aria-label$='to connect']" },
     ),
     moreActions: entry(
       "profile.moreActions",
       { role: "button", name: /^more actions$/i },
-      { css: "main section button[aria-label='More actions']" },
+      { role: "button", name: "More", exact: true },
+      { css: "button[aria-label='More actions']" },
     ),
+    // Inside the opened More menu only. "Connect" is matched exactly, so
+    // "Remove connection" can never match.
     connectInMenu: entry(
       "profile.connectInMenu",
+      { css: "a[href*='/preload/custom-invite/']" },
       { role: "button", name: /^invite .+ to connect$/i },
-      { role: "menuitem", name: /connect/i },
-      { css: "div.artdeco-dropdown__content [aria-label$='to connect']" },
+      { role: "menuitem", name: "Connect", exact: true },
+      { role: "button", name: "Connect", exact: true },
+      { css: "[aria-label^='Invite'][aria-label$='to connect']" },
     ),
     pending: entry(
       "profile.pending",
       { role: "button", name: /^pending/i },
-      { css: "main section button[aria-label*='Pending' i]" },
+      { role: "link", name: /^pending/i },
+      { css: "button[aria-label*='Pending' i]" },
     ),
     message: entry(
       "profile.message",
-      { role: "button", name: /^message /i },
-      { role: "link", name: /^message /i },
-      { css: "main section a[href*='/messaging/compose']" },
+      { css: "a[href*='/messaging/compose/']" },
+      { role: "button", name: /^message\b/i },
+      { role: "link", name: /^message\b/i },
     ),
   },
 
+  // Everything in the invite flow is looked up inside the dialog that opened
+  // after the Connect click. When a name doesn't match, the dialog's buttons
+  // are picked by position (the last labelled button is the primary action).
   connect: {
-    addNote: entry("connect.addNote", { role: "button", name: /add a note/i }),
+    addNote: entry("connect.addNote", { role: "button", name: /^add a (free )?note/i }),
     note: entry(
       "connect.note",
       { css: "textarea#custom-message" },
       { css: "textarea[name='message']" },
+      { css: "textarea" },
       { role: "textbox" },
     ),
     send: entry(
       "connect.send",
       { role: "button", name: /^send( invitation| now)?$/i },
       { css: "button[aria-label='Send now']" },
+      { css: "button[aria-label='Send invitation']" },
     ),
     sendWithoutNote: entry(
       "connect.sendWithoutNote",
-      { role: "button", name: /send without a note/i },
+      { role: "button", name: /^send without a note/i },
     ),
   },
 
+  // Looked up inside the matching invitation card only.
   invitations: {
-    accept: entry("invitations.accept", { role: "button", name: /^accept/i }),
-    ignore: entry("invitations.ignore", { role: "button", name: /^ignore/i }),
+    accept: entry("invitations.accept", { role: "button", name: /^accept\b/i }),
+    ignore: entry("invitations.ignore", { role: "button", name: /^ignore\b/i }),
   },
 
+  // The editor and Send button are looked up inside one conversation (the
+  // overlay or thread the editor belongs to). With LinkedIn's "Press Enter to
+  // Send" setting there is no Send button and Enter sends.
   messaging: {
     editor: entry(
       "messaging.editor",
       { role: "textbox", name: /write a message/i },
       { css: "div.msg-form__contenteditable[contenteditable='true']" },
+      { css: "form div[contenteditable='true'][role='textbox']" },
     ),
     send: entry(
       "messaging.send",
       { css: "button.msg-form__send-button" },
+      { css: "button[type='submit']" },
       { role: "button", name: /^send$/i },
     ),
     closeOverlay: entry(
       "messaging.closeOverlay",
       { role: "button", name: /close your (conversation|draft)/i },
       { css: "button.msg-overlay-bubble-header__control[aria-label*='Close' i]" },
+      { css: "aside#msg-overlay header button[aria-label^='Close' i]" },
     ),
   },
 } as const;
@@ -431,10 +453,12 @@ export const EXTRACT = {
     },
   } satisfies ExtractSpec,
 
+  // The top card first (the section holding the name heading), then all of
+  // main. LinkedIn moved the name from h1 to h2 in 2026.
   profileTop: {
-    container: ["main"],
+    container: ["main section:has(h1)", "main section:has(h2)", "main"],
     fields: {
-      name: ["h1"],
+      name: ["h1", "h2"],
       headline: ["div.text-body-medium.break-words", ".pv-text-details__left-panel .text-body-medium"],
       location: [
         "span.text-body-small.inline.t-black--light.break-words",

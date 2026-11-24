@@ -1,0 +1,67 @@
+{
+  "add_note_prompt": {
+    "noteBox": false,
+    "noteMax": null,
+    "emailInput": false,
+    "premiumLinks": 0,
+    "actions": [
+      { "text": "Add a note", "label": "Add a note", "disabled": false },
+      { "text": "Send without a note", "label": "Send without a note", "disabled": false }
+    ]
+  },
+  "add_note_prompt_with_premium_banner": {
+    "noteBox": false,
+    "noteMax": null,
+    "emailInput": false,
+    "premiumLinks": 1,
+    "actions": [
+      { "text": "Add a note", "label": "Add a note", "disabled": false },
+      { "text": "Send without a note", "label": "Send without a note", "disabled": false }
+    ]
+  },
+  "note_form": {
+    "noteBox": true,
+    "noteMax": 200,
+    "emailInput": false,
+    "premiumLinks": 0,
+    "actions": [
+      { "text": "Cancel", "label": "Cancel adding a note", "disabled": false },
+      { "text": "Send", "label": "Send invitation", "disabled": false }
+    ]
+  },
+  "note_form_with_premium_banner": {
+    "noteBox": true,
+    "noteMax": 200,
+    "emailInput": false,
+    "premiumLinks": 1,
+    "actions": [
+      { "text": "Try Premium for $0", "label": "", "disabled": false },
+      { "text": "Cancel", "label": "Cancel adding a note", "disabled": false },
+      { "text": "Send", "label": "Send invitation", "disabled": false }
+    ]
+  },
+  "premium_note_limit": {
+    "noteBox": false,
+    "noteMax": null,
+    "emailInput": false,
+    "premiumLinks": 2,
+    "actions": [
+      { "text": "Try Premium for $0", "label": "", "disabled": false },
+      { "text": "Send without a note", "label": "Send without a note", "disabled": false }
+    ]
+  },
+  "email_required": {
+    "noteBox": false,
+    "noteMax": null,
+    "emailInput": true,
+    "premiumLinks": 0,
+    "actions": [{ "text": "Send", "label": "Send invitation", "disabled": true }]
+  },
+  "weekly_limit_notice": {
+    "noteBox": false,
+    "noteMax": null,
+    "emailInput": false,
+    "premiumLinks": 0,
+    "actions": [{ "text": "Got it", "label": "", "disabled": false }]
+  }
+}

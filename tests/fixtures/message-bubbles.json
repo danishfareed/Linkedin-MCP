@@ -1,0 +1,25 @@
+{
+  "text": "Thanks Jordan! Happy to share the deck.\nDoes Thursday work for a call?",
+  "before": [
+    { "text": "Jordan Lee 9:02 AM\nCould you send over the deck from the meetup?", "own": false },
+    { "text": "Morgan Avery 9:10 AM\nThanks Jordan! Happy to share the deck. Does Thursday work for a call?", "own": true },
+    { "text": "Jordan Lee 9:15 AM\nThanks Jordan! Happy to share the deck. Does Thursday work for a call?", "own": false }
+  ],
+  "after_sent": [
+    { "text": "Jordan Lee 9:02 AM\nCould you send over the deck from the meetup?", "own": false },
+    { "text": "Morgan Avery 9:10 AM\nThanks Jordan! Happy to share the deck. Does Thursday work for a call?", "own": true },
+    { "text": "Jordan Lee 9:15 AM\nThanks Jordan! Happy to share the deck. Does Thursday work for a call?", "own": false },
+    { "text": "Morgan Avery 10:41 AM\nThanks Jordan! Happy to share the deck.\nDoes Thursday work for a call?", "own": true }
+  ],
+  "after_other_replied_same": [
+    { "text": "Jordan Lee 9:02 AM\nCould you send over the deck from the meetup?", "own": false },
+    { "text": "Morgan Avery 9:10 AM\nThanks Jordan! Happy to share the deck. Does Thursday work for a call?", "own": true },
+    { "text": "Jordan Lee 9:15 AM\nThanks Jordan! Happy to share the deck. Does Thursday work for a call?", "own": false },
+    { "text": "Jordan Lee 10:41 AM\nThanks Jordan! Happy to share the deck. Does Thursday work for a call?", "own": false }
+  ],
+  "after_unknown_owner": [
+    { "text": "Could you send over the deck from the meetup?", "own": null },
+    { "text": "Thanks Jordan! Happy to share the deck. Does Thursday work for a call?", "own": null },
+    { "text": "Thanks Jordan!  Happy to share the deck.\n\nDoes Thursday work for a call?", "own": null }
+  ]
+}

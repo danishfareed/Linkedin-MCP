@@ -1,0 +1,63 @@
+{
+  "connectable_link": {
+    "name": "Jordan Lee",
+    "links": [
+      { "href": "https://www.linkedin.com/in/jordan-lee-0401/overlay/contact-info/", "label": "", "text": "Contact info", "visible": true },
+      { "href": "https://www.linkedin.com/preload/custom-invite/?vanityName=jordan-lee-0401", "label": "Invite Jordan Lee to connect", "text": "Connect", "visible": true },
+      { "href": "https://www.linkedin.com/search/results/people/?facetConnectionOf=%5B%22ACoAA0401%22%5D", "label": "", "text": "500+ connections", "visible": true }
+    ],
+    "buttons": [{ "label": "More actions", "text": "More", "visible": true, "disabled": false }]
+  },
+  "pending": {
+    "name": "Jordan Lee",
+    "links": [{ "href": "https://www.linkedin.com/in/jordan-lee-0401/overlay/contact-info/", "label": "", "text": "Contact info", "visible": true }],
+    "buttons": [
+      { "label": "Pending, click to withdraw invitation sent to Jordan Lee", "text": "Pending", "visible": true, "disabled": false },
+      { "label": "More actions", "text": "More", "visible": true, "disabled": false }
+    ]
+  },
+  "pending_hidden": {
+    "name": "Jordan Lee",
+    "links": [{ "href": "https://www.linkedin.com/preload/custom-invite/?vanityName=jordan-lee-0401", "label": "Invite Jordan Lee to connect", "text": "Connect", "visible": true }],
+    "buttons": [{ "label": "Pending, click to withdraw invitation sent to Jordan Lee", "text": "Pending", "visible": false, "disabled": false }]
+  },
+  "self": {
+    "name": "Morgan Avery",
+    "links": [
+      { "href": "https://www.linkedin.com/in/morgan-avery-0400/edit/intro/?profileFormEntryPoint=PROFILE_SECTION", "label": "Edit intro", "text": "", "visible": true },
+      { "href": "https://www.linkedin.com/in/morgan-avery-0400/overlay/contact-info/", "label": "", "text": "Contact info", "visible": true }
+    ],
+    "buttons": [{ "label": "", "text": "Open to", "visible": true, "disabled": false }]
+  },
+  "message_only": {
+    "name": "Casey Morgan",
+    "links": [{ "href": "https://www.linkedin.com/messaging/compose/?profileUrn=urn%3Ali%3Afsd_profile%3AACoAA0402&recipient=ACoAA0402", "label": "Message Casey Morgan", "text": "Message", "visible": true }],
+    "buttons": [{ "label": "More actions", "text": "More", "visible": true, "disabled": false }]
+  },
+  "follow_primary": {
+    "name": "Riley Chen",
+    "links": [],
+    "buttons": [
+      { "label": "Follow Riley Chen", "text": "Follow", "visible": true, "disabled": false },
+      { "label": "More actions", "text": "More", "visible": true, "disabled": false }
+    ]
+  },
+  "wrong_vanity": {
+    "name": "Jordan Lee",
+    "links": [{ "href": "https://www.linkedin.com/preload/custom-invite/?vanityName=someone-else-0499", "label": "Invite Someone Else to connect", "text": "Connect", "visible": true }],
+    "buttons": []
+  },
+  "old_button": {
+    "name": "Jordan Lee",
+    "links": [],
+    "buttons": [
+      { "label": "Invite Jordan Lee to connect", "text": "Connect", "visible": true, "disabled": false },
+      { "label": "More actions", "text": "More", "visible": true, "disabled": false }
+    ]
+  },
+  "old_button_other_person": {
+    "name": "Jordan Lee",
+    "links": [],
+    "buttons": [{ "label": "Invite Sam Park to connect", "text": "Connect", "visible": true, "disabled": false }]
+  }
+}

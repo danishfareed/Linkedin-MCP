@@ -1,3 +1,4 @@
+import { HREF } from "../anchors.js";
 import type { Snapshot } from "../snapshot.js";
 import { cleanBody, cleanText, lines, parseCount } from "./text.js";
 
@@ -27,7 +28,33 @@ export interface Profile {
   languages?: ProfileEntry[];
   volunteering?: ProfileEntry[];
   projects?: ProfileEntry[];
+  /** False when a requested section may be cut short (its full list couldn't be read). */
+  complete: boolean;
+  note?: string;
 }
+
+/**
+ * Sections whose full list is read from the /details/<path>/ page when the
+ * main profile only shows the first few with a "Show all" link.
+ */
+export type DetailsSection = "experience" | "education";
+export const DETAILS_PATHS: Record<DetailsSection, string> = {
+  experience: "experience",
+  education: "education",
+};
+
+function isDetailsSection(key: ProfileSection): key is DetailsSection {
+  return key in DETAILS_PATHS;
+}
+
+/** Section paths LinkedIn uses behind "Show all", for the ones we don't follow. */
+const OTHER_DETAILS_PATHS: Partial<Record<ProfileSection, string>> = {
+  skills: "skills",
+  certifications: "certifications",
+  languages: "languages",
+  volunteering: "volunteering-experiences",
+  projects: "projects",
+};
 
 const DATE_RANGE = /\b((jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+)?\d{4}\s*[-–—]\s*(present|((jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+)?\d{4})\b/i;
 const SINGLE_DATE = /^((jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+)?\d{4}$|^issued\s/i;
@@ -60,7 +87,7 @@ export function parseEntry(text: string): ProfileEntry {
   return { title, subtitle, dates, location, description: cleanBody(rest.join("\n")) };
 }
 
-function sectionKey(s: Snapshot): string | null {
+export function sectionKey(s: Snapshot): ProfileSection | null {
   const anchor = s.attrs.anchor?.toLowerCase();
   if (anchor) {
     const known = PROFILE_SECTIONS.find((k) => anchor === k || anchor.startsWith(k) || (k === "certifications" && anchor.startsWith("licenses")) || (k === "volunteering" && anchor.startsWith("volunteer")));
@@ -78,6 +105,76 @@ function entriesOf(s: Snapshot): ProfileEntry[] {
   return texts.map(parseEntry).filter((e) => e.title);
 }
 
+/** Requested list sections not (yet) present among the section snapshots. Lower sections load as you scroll. */
+export function missingSections(sections: Snapshot[], wanted: readonly ProfileSection[]): ProfileSection[] {
+  const present = new Set(sections.map(sectionKey).filter(Boolean));
+  return wanted.filter((k) => k !== "about" && !present.has(k));
+}
+
+function firstByKey(sections: Snapshot[]): Map<ProfileSection, Snapshot> {
+  const byKey = new Map<ProfileSection, Snapshot>();
+  for (const s of sections) {
+    const key = sectionKey(s);
+    if (key && !byKey.has(key)) byKey.set(key, s);
+  }
+  return byKey;
+}
+
+/** The "Show all" link of a section, pointing at /in/<id>/details/<path>/. */
+export function detailsLink(s: Snapshot, path: string): string | null {
+  const re = HREF.details(path);
+  const hit = s.links.find((l) => re.test(l.href));
+  if (!hit) return null;
+  try {
+    const u = new URL(hit.href, "https://www.linkedin.com");
+    if (!/(^|\.)linkedin\.com$/i.test(u.hostname)) return null;
+    return `https://www.linkedin.com${u.pathname.endsWith("/") ? u.pathname : `${u.pathname}/`}`;
+  } catch {
+    return null;
+  }
+}
+
+export interface DetailsPlan {
+  /** Sections to read from their details page. */
+  fetch: { key: DetailsSection; url: string }[];
+  /** Requested sections that have a "Show all" link we don't follow, so they may be cut short. */
+  truncated: ProfileSection[];
+}
+
+/** Pure: which requested sections need their details page. */
+export function planDetails(sections: Snapshot[], wanted: readonly ProfileSection[]): DetailsPlan {
+  const byKey = firstByKey(sections);
+  const plan: DetailsPlan = { fetch: [], truncated: [] };
+  for (const key of wanted) {
+    const s = byKey.get(key);
+    if (!s) continue;
+    if (isDetailsSection(key)) {
+      const url = detailsLink(s, DETAILS_PATHS[key]);
+      if (url) plan.fetch.push({ key, url });
+      continue;
+    }
+    const other = OTHER_DETAILS_PATHS[key];
+    if (other && detailsLink(s, other)) plan.truncated.push(key);
+  }
+  return plan;
+}
+
+/** Entries from a details page: the section snapshot with the most items. */
+export function parseDetailsEntries(sections: Snapshot[], key: ProfileSection): ProfileEntry[] {
+  const candidates = sections.filter((s) => s.items.length && (sectionKey(s) === key || sectionKey(s) === null));
+  const best = candidates.sort((a, b) => b.items.length - a.items.length)[0];
+  return best ? entriesOf(best) : [];
+}
+
+/** Pure: the completeness note for a profile read. */
+export function profileCompleteness(truncated: readonly ProfileSection[]): Pick<Profile, "complete" | "note"> {
+  if (!truncated.length) return { complete: true };
+  return {
+    complete: false,
+    note: `These sections may be cut short because LinkedIn only showed the first few entries: ${truncated.join(", ")}.`,
+  };
+}
+
 export function parseProfile(top: Snapshot, sections: Snapshot[], wanted: readonly ProfileSection[], profileUrl: string | null): Profile {
   const f = top.fields;
   const topLines = lines(top.text);
@@ -89,13 +186,10 @@ export function parseProfile(top: Snapshot, sections: Snapshot[], wanted: readon
     connections: cleanText(f.connections)?.replace(/\s*connections?$/i, "") ?? null,
     followers: parseCount(f.followers),
     profile_url: profileUrl,
+    complete: true,
   };
 
-  const byKey = new Map<string, Snapshot>();
-  for (const s of sections) {
-    const key = sectionKey(s);
-    if (key && !byKey.has(key)) byKey.set(key, s);
-  }
+  const byKey = firstByKey(sections);
 
   for (const key of wanted) {
     const s = byKey.get(key);
